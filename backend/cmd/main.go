@@ -8,8 +8,8 @@ import (
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/titusqpc/jumbo_sales/backend/internal/config"
 	_ "github.com/titusqpc/jumbo_sales/backend/docs"
+	"github.com/titusqpc/jumbo_sales/backend/internal/config"
 	"github.com/titusqpc/jumbo_sales/backend/internal/handlers"
 	"github.com/titusqpc/jumbo_sales/backend/internal/middleware"
 )
