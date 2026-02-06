@@ -1,0 +1,1092 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Crowd-funded charity auction platform API. Bidders pay increments, winners donate items to beneficiaries.",
+        "title": "Jumbo Sales API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "QPC Group Africa",
+            "url": "https://qpcgroupafrica.com",
+            "email": "titus@qpcgroupafrica.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "jumbosalesbackend.qpcgroupafrica.com",
+    "basePath": "/api",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate user and get JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Create a new user account (bidder or cashier)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User registration details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/beneficiaries": {
+            "get": {
+                "description": "Get all active beneficiaries with optional category filter",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "beneficiaries"
+                ],
+                "summary": "List beneficiaries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by category",
+                        "name": "category",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new beneficiary to the system (cashier/admin only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "beneficiaries"
+                ],
+                "summary": "Add beneficiary",
+                "parameters": [
+                    {
+                        "description": "Beneficiary details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.CreateBeneficiaryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all sessions with optional status filter",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "List all auction sessions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by status (open, closed, donated)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Start a new auction session for an item (cashier only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Create auction session",
+                "parameters": [
+                    {
+                        "description": "Session details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.CreateSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a single auction session with all bids",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Get session details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{id}/bids": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all bids placed on an auction session",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bids"
+                ],
+                "summary": "List bids for session",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Place a bid on an open auction session. Bidder pays only the increment (difference from previous bid).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bids"
+                ],
+                "summary": "Place a bid",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Bid details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.PlaceBidRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{id}/close": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "End bidding and declare winner (cashier only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Close auction session",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{id}/donate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Winner donates the won item to a chosen beneficiary",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "donations"
+                ],
+                "summary": "Donate item to beneficiary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Donation details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.DonateItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession": {
+            "type": "object",
+            "properties": {
+                "bids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid"
+                    }
+                },
+                "cashier": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                        }
+                    ]
+                },
+                "cashier_id": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "current_price": {
+                    "description": "Latest bid amount",
+                    "type": "number"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "item_description": {
+                    "type": "string"
+                },
+                "item_name": {
+                    "type": "string"
+                },
+                "starting_price": {
+                    "description": "Initial price in KES",
+                    "type": "number"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.SessionStatus"
+                },
+                "total_collected": {
+                    "description": "Sum of all payments",
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "winner": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                },
+                "winner_id": {
+                    "description": "Last bidder when closed",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "e.g., \"orphanage\", \"school\", \"hospital\"",
+                    "type": "string"
+                },
+                "contact_info": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "donations": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "location": {
+                    "description": "Physical location",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.Bid": {
+            "type": "object",
+            "properties": {
+                "bid_amount": {
+                    "description": "The total bid value",
+                    "type": "number"
+                },
+                "bid_order": {
+                    "description": "Sequence number (1st, 2nd, etc.)",
+                    "type": "integer"
+                },
+                "bidder": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                },
+                "bidder_id": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "increment_paid": {
+                    "description": "Amount bidder actually paid (difference from previous)",
+                    "type": "number"
+                },
+                "payment": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Payment"
+                },
+                "session": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                        }
+                    ]
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.Donation": {
+            "type": "object",
+            "properties": {
+                "beneficiary": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary"
+                },
+                "beneficiary_id": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "donor": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                },
+                "donor_id": {
+                    "description": "The auction winner",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "session": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                        }
+                    ]
+                },
+                "session_id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.Payment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bid": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid"
+                        }
+                    ]
+                },
+                "bid_id": {
+                    "type": "integer"
+                },
+                "confirmed_at": {
+                    "type": "string"
+                },
+                "confirmed_by": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                },
+                "confirmed_by_id": {
+                    "description": "Cashier who confirmed",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentMethod"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentStatus"
+                },
+                "transaction_ref": {
+                    "description": "M-Pesa code, bank ref, etc.",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "mpesa",
+                "bank",
+                "cash"
+            ],
+            "x-enum-varnames": [
+                "PaymentMpesa",
+                "PaymentBank",
+                "PaymentCash"
+            ]
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "confirmed",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "PaymentPending",
+                "PaymentConfirmed",
+                "PaymentFailed"
+            ]
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.SessionStatus": {
+            "type": "string",
+            "enum": [
+                "open",
+                "closing",
+                "closed",
+                "complete"
+            ],
+            "x-enum-comments": {
+                "StatusClosed": "Bidding ended, awaiting donation",
+                "StatusClosing": "Cashier counting 1,2,3",
+                "StatusComplete": "Item donated to beneficiary",
+                "StatusOpen": "Accepting bids"
+            },
+            "x-enum-descriptions": [
+                "Accepting bids",
+                "Cashier counting 1,2,3",
+                "Bidding ended, awaiting donation",
+                "Item donated to beneficiary"
+            ],
+            "x-enum-varnames": [
+                "StatusOpen",
+                "StatusClosing",
+                "StatusClosed",
+                "StatusComplete"
+            ]
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.User": {
+            "type": "object",
+            "properties": {
+                "bids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "donations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "For M-Pesa payments",
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.UserRole"
+                },
+                "sessions_created": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_titusqpc_jumbo_sales_backend_internal_models.UserRole": {
+            "type": "string",
+            "enum": [
+                "cashier",
+                "bidder",
+                "admin"
+            ],
+            "x-enum-comments": {
+                "RoleAdmin": "System administrator",
+                "RoleBidder": "Participates in auctions by placing bids",
+                "RoleCashier": "Creates and manages auction sessions"
+            },
+            "x-enum-descriptions": [
+                "Creates and manages auction sessions",
+                "Participates in auctions by placing bids",
+                "System administrator"
+            ],
+            "x-enum-varnames": [
+                "RoleCashier",
+                "RoleBidder",
+                "RoleAdmin"
+            ]
+        },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_handlers.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User"
+                }
+            }
+        },
+        "internal_handlers.CreateBeneficiaryRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "category": {
+                    "description": "orphanage, school, hospital, etc.",
+                    "type": "string"
+                },
+                "contact_info": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers.CreateSessionRequest": {
+            "type": "object",
+            "required": [
+                "item_name",
+                "starting_price"
+            ],
+            "properties": {
+                "item_description": {
+                    "type": "string"
+                },
+                "item_name": {
+                    "type": "string"
+                },
+                "starting_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_handlers.DonateItemRequest": {
+            "type": "object",
+            "required": [
+                "beneficiary_id"
+            ],
+            "properties": {
+                "beneficiary_id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers.PlaceBidRequest": {
+            "type": "object",
+            "required": [
+                "bid_amount",
+                "payment_method"
+            ],
+            "properties": {
+                "bid_amount": {
+                    "type": "number"
+                },
+                "payment_method": {
+                    "description": "mpesa, bank, cash",
+                    "type": "string"
+                },
+                "transaction_ref": {
+                    "description": "Optional: M-Pesa code, bank ref",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password",
+                "phone"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "Optional: defaults to \"bidder\"",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

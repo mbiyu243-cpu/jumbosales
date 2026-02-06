@@ -16,7 +16,18 @@ type CreateSessionRequest struct {
 	StartingPrice   float64 `json:"starting_price" binding:"required,gt=0"`
 }
 
-// CreateSession starts a new auction session (cashier only)
+// CreateSession godoc
+// @Summary Create auction session
+// @Description Start a new auction session for an item (cashier only)
+// @Tags sessions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body CreateSessionRequest true "Session details"
+// @Success 201 {object} models.AuctionSession
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Router /sessions [post]
 func (h *Handler) CreateSession(c *gin.Context) {
 	userRole := c.GetString("userRole")
 	if userRole != "cashier" && userRole != "admin" {
@@ -53,7 +64,15 @@ func (h *Handler) CreateSession(c *gin.Context) {
 	c.JSON(http.StatusCreated, session)
 }
 
-// ListSessions returns all auction sessions with optional status filter
+// ListSessions godoc
+// @Summary List all auction sessions
+// @Description Get all sessions with optional status filter
+// @Tags sessions
+// @Produce json
+// @Security BearerAuth
+// @Param status query string false "Filter by status (open, closed, donated)"
+// @Success 200 {array} models.AuctionSession
+// @Router /sessions [get]
 func (h *Handler) ListSessions(c *gin.Context) {
 	status := c.Query("status") // Optional: ?status=open
 
@@ -72,7 +91,16 @@ func (h *Handler) ListSessions(c *gin.Context) {
 	c.JSON(http.StatusOK, sessions)
 }
 
-// GetSession returns a single session with all bids
+// GetSession godoc
+// @Summary Get session details
+// @Description Get a single auction session with all bids
+// @Tags sessions
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Session ID"
+// @Success 200 {object} models.AuctionSession
+// @Failure 404 {object} map[string]string
+// @Router /sessions/{id} [get]
 func (h *Handler) GetSession(c *gin.Context) {
 	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -90,7 +118,17 @@ func (h *Handler) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
-// CloseSession ends bidding and declares a winner (cashier only)
+// CloseSession godoc
+// @Summary Close auction session
+// @Description End bidding and declare winner (cashier only)
+// @Tags sessions
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Session ID"
+// @Success 200 {object} models.AuctionSession
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Router /sessions/{id}/close [post]
 func (h *Handler) CloseSession(c *gin.Context) {
 	userRole := c.GetString("userRole")
 	userID := c.GetUint("userID")

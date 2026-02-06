@@ -1,0 +1,725 @@
+basePath: /api
+definitions:
+  github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession:
+    properties:
+      bids:
+        items:
+          $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid'
+        type: array
+      cashier:
+        allOf:
+        - $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+        description: Relationships
+      cashier_id:
+        type: integer
+      createdAt:
+        type: string
+      current_price:
+        description: Latest bid amount
+        type: number
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      item_description:
+        type: string
+      item_name:
+        type: string
+      starting_price:
+        description: Initial price in KES
+        type: number
+      status:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.SessionStatus'
+      total_collected:
+        description: Sum of all payments
+        type: number
+      updatedAt:
+        type: string
+      winner:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+      winner_id:
+        description: Last bidder when closed
+        type: integer
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary:
+    properties:
+      category:
+        description: e.g., "orphanage", "school", "hospital"
+        type: string
+      contact_info:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      donations:
+        description: Relationships
+        items:
+          $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation'
+        type: array
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      location:
+        description: Physical location
+        type: string
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.Bid:
+    properties:
+      bid_amount:
+        description: The total bid value
+        type: number
+      bid_order:
+        description: Sequence number (1st, 2nd, etc.)
+        type: integer
+      bidder:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+      bidder_id:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      increment_paid:
+        description: Amount bidder actually paid (difference from previous)
+        type: number
+      payment:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Payment'
+      session:
+        allOf:
+        - $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        description: Relationships
+      session_id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.Donation:
+    properties:
+      beneficiary:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary'
+      beneficiary_id:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      donor:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+      donor_id:
+        description: The auction winner
+        type: integer
+      id:
+        type: integer
+      notes:
+        type: string
+      session:
+        allOf:
+        - $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        description: Relationships
+      session_id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.Payment:
+    properties:
+      amount:
+        type: number
+      bid:
+        allOf:
+        - $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid'
+        description: Relationships
+      bid_id:
+        type: integer
+      confirmed_at:
+        type: string
+      confirmed_by:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+      confirmed_by_id:
+        description: Cashier who confirmed
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      method:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentMethod'
+      status:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentStatus'
+      transaction_ref:
+        description: M-Pesa code, bank ref, etc.
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentMethod:
+    enum:
+    - mpesa
+    - bank
+    - cash
+    type: string
+    x-enum-varnames:
+    - PaymentMpesa
+    - PaymentBank
+    - PaymentCash
+  github_com_titusqpc_jumbo_sales_backend_internal_models.PaymentStatus:
+    enum:
+    - pending
+    - confirmed
+    - failed
+    type: string
+    x-enum-varnames:
+    - PaymentPending
+    - PaymentConfirmed
+    - PaymentFailed
+  github_com_titusqpc_jumbo_sales_backend_internal_models.SessionStatus:
+    enum:
+    - open
+    - closing
+    - closed
+    - complete
+    type: string
+    x-enum-comments:
+      StatusClosed: Bidding ended, awaiting donation
+      StatusClosing: Cashier counting 1,2,3
+      StatusComplete: Item donated to beneficiary
+      StatusOpen: Accepting bids
+    x-enum-descriptions:
+    - Accepting bids
+    - Cashier counting 1,2,3
+    - Bidding ended, awaiting donation
+    - Item donated to beneficiary
+    x-enum-varnames:
+    - StatusOpen
+    - StatusClosing
+    - StatusClosed
+    - StatusComplete
+  github_com_titusqpc_jumbo_sales_backend_internal_models.User:
+    properties:
+      bids:
+        items:
+          $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid'
+        type: array
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      donations:
+        items:
+          $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation'
+        type: array
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      phone:
+        description: For M-Pesa payments
+        type: string
+      role:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.UserRole'
+      sessions_created:
+        description: Relationships
+        items:
+          $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        type: array
+      updatedAt:
+        type: string
+    type: object
+  github_com_titusqpc_jumbo_sales_backend_internal_models.UserRole:
+    enum:
+    - cashier
+    - bidder
+    - admin
+    type: string
+    x-enum-comments:
+      RoleAdmin: System administrator
+      RoleBidder: Participates in auctions by placing bids
+      RoleCashier: Creates and manages auction sessions
+    x-enum-descriptions:
+    - Creates and manages auction sessions
+    - Participates in auctions by placing bids
+    - System administrator
+    x-enum-varnames:
+    - RoleCashier
+    - RoleBidder
+    - RoleAdmin
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  internal_handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.User'
+    type: object
+  internal_handlers.CreateBeneficiaryRequest:
+    properties:
+      category:
+        description: orphanage, school, hospital, etc.
+        type: string
+      contact_info:
+        type: string
+      description:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  internal_handlers.CreateSessionRequest:
+    properties:
+      item_description:
+        type: string
+      item_name:
+        type: string
+      starting_price:
+        type: number
+    required:
+    - item_name
+    - starting_price
+    type: object
+  internal_handlers.DonateItemRequest:
+    properties:
+      beneficiary_id:
+        type: integer
+      notes:
+        type: string
+    required:
+    - beneficiary_id
+    type: object
+  internal_handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_handlers.PlaceBidRequest:
+    properties:
+      bid_amount:
+        type: number
+      payment_method:
+        description: mpesa, bank, cash
+        type: string
+      transaction_ref:
+        description: 'Optional: M-Pesa code, bank ref'
+        type: string
+    required:
+    - bid_amount
+    - payment_method
+    type: object
+  internal_handlers.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      role:
+        description: 'Optional: defaults to "bidder"'
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone
+    type: object
+host: jumbosalesbackend.qpcgroupafrica.com
+info:
+  contact:
+    email: titus@qpcgroupafrica.com
+    name: QPC Group Africa
+    url: https://qpcgroupafrica.com
+  description: Crowd-funded charity auction platform API. Bidders pay increments,
+    winners donate items to beneficiaries.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Jumbo Sales API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login user
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account (bidder or cashier)
+      parameters:
+      - description: User registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /beneficiaries:
+    get:
+      description: Get all active beneficiaries with optional category filter
+      parameters:
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary'
+            type: array
+      summary: List beneficiaries
+      tags:
+      - beneficiaries
+    post:
+      consumes:
+      - application/json
+      description: Add a new beneficiary to the system (cashier/admin only)
+      parameters:
+      - description: Beneficiary details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.CreateBeneficiaryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Beneficiary'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add beneficiary
+      tags:
+      - beneficiaries
+  /sessions:
+    get:
+      description: Get all sessions with optional status filter
+      parameters:
+      - description: Filter by status (open, closed, donated)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List all auction sessions
+      tags:
+      - sessions
+    post:
+      consumes:
+      - application/json
+      description: Start a new auction session for an item (cashier only)
+      parameters:
+      - description: Session details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create auction session
+      tags:
+      - sessions
+  /sessions/{id}:
+    get:
+      description: Get a single auction session with all bids
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get session details
+      tags:
+      - sessions
+  /sessions/{id}/bids:
+    get:
+      description: Get all bids placed on an auction session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Bid'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List bids for session
+      tags:
+      - bids
+    post:
+      consumes:
+      - application/json
+      description: Place a bid on an open auction session. Bidder pays only the increment
+        (difference from previous bid).
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bid details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.PlaceBidRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Place a bid
+      tags:
+      - bids
+  /sessions/{id}/close:
+    post:
+      description: End bidding and declare winner (cashier only)
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.AuctionSession'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Close auction session
+      tags:
+      - sessions
+  /sessions/{id}/donate:
+    post:
+      consumes:
+      - application/json
+      description: Winner donates the won item to a chosen beneficiary
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Donation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.DonateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_titusqpc_jumbo_sales_backend_internal_models.Donation'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Donate item to beneficiary
+      tags:
+      - donations
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

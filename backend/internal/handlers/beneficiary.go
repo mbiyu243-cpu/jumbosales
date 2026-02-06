@@ -17,7 +17,18 @@ type CreateBeneficiaryRequest struct {
 	ContactInfo string `json:"contact_info"`
 }
 
-// CreateBeneficiary adds a new beneficiary to the system (cashier/admin only)
+// CreateBeneficiary godoc
+// @Summary Add beneficiary
+// @Description Add a new beneficiary to the system (cashier/admin only)
+// @Tags beneficiaries
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body CreateBeneficiaryRequest true "Beneficiary details"
+// @Success 201 {object} models.Beneficiary
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Router /beneficiaries [post]
 func (h *Handler) CreateBeneficiary(c *gin.Context) {
 	userRole := c.GetString("userRole")
 	if userRole != "cashier" && userRole != "admin" {
@@ -48,7 +59,14 @@ func (h *Handler) CreateBeneficiary(c *gin.Context) {
 	c.JSON(http.StatusCreated, beneficiary)
 }
 
-// ListBeneficiaries returns all active beneficiaries
+// ListBeneficiaries godoc
+// @Summary List beneficiaries
+// @Description Get all active beneficiaries with optional category filter
+// @Tags beneficiaries
+// @Produce json
+// @Param category query string false "Filter by category"
+// @Success 200 {array} models.Beneficiary
+// @Router /beneficiaries [get]
 func (h *Handler) ListBeneficiaries(c *gin.Context) {
 	category := c.Query("category") // Optional filter
 
@@ -73,7 +91,19 @@ type DonateItemRequest struct {
 	Notes         string `json:"notes"`
 }
 
-// DonateItem allows the winner to donate their item to a beneficiary
+// DonateItem godoc
+// @Summary Donate item to beneficiary
+// @Description Winner donates the won item to a chosen beneficiary
+// @Tags donations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Session ID"
+// @Param request body DonateItemRequest true "Donation details"
+// @Success 200 {object} models.Donation
+// @Failure 400 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Router /sessions/{id}/donate [post]
 func (h *Handler) DonateItem(c *gin.Context) {
 	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {

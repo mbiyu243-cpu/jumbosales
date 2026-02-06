@@ -33,7 +33,17 @@ type AuthResponse struct {
 	User  *models.User `json:"user"`
 }
 
-// Register creates a new user account
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user account (bidder or cashier)
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "User registration details"
+// @Success 201 {object} AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /auth/register [post]
 func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -77,7 +87,17 @@ func (h *Handler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, AuthResponse{Token: token, User: &user})
 }
 
-// Login authenticates a user and returns a JWT token
+// Login godoc
+// @Summary Login user
+// @Description Authenticate user and get JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login credentials"
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /auth/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

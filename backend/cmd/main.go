@@ -6,10 +6,33 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/titusqpc/jumbo_sales/backend/internal/config"
+	_ "github.com/titusqpc/jumbo_sales/backend/docs"
 	"github.com/titusqpc/jumbo_sales/backend/internal/handlers"
 	"github.com/titusqpc/jumbo_sales/backend/internal/middleware"
 )
+
+// @title Jumbo Sales API
+// @version 1.0
+// @description Crowd-funded charity auction platform API. Bidders pay increments, winners donate items to beneficiaries.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name QPC Group Africa
+// @contact.url https://qpcgroupafrica.com
+// @contact.email titus@qpcgroupafrica.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host jumbosalesbackend.qpcgroupafrica.com
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	// Load environment variables
@@ -37,20 +60,13 @@ func main() {
 	// Initialize handlers with dependencies
 	h := handlers.NewHandler(db)
 
-	// Root landing page
+	// Root landing page - redirect to Swagger
 	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"service":     "Jumbo Sales API",
-			"version":     "1.0.0",
-			"description": "Crowd-funded charity auction platform API",
-			"docs":        "/api/health",
-			"endpoints": gin.H{
-				"auth":          "/api/auth/login, /api/auth/register",
-				"sessions":      "/api/sessions",
-				"beneficiaries": "/api/beneficiaries",
-			},
-		})
+		c.Redirect(302, "/swagger/index.html")
 	})
+
+	// Swagger documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health check endpoint
 	router.GET("/api/health", func(c *gin.Context) {

@@ -16,7 +16,19 @@ type PlaceBidRequest struct {
 	TransactionRef string  `json:"transaction_ref"`                   // Optional: M-Pesa code, bank ref
 }
 
-// PlaceBid allows a bidder to place a bid on an open session
+// PlaceBid godoc
+// @Summary Place a bid
+// @Description Place a bid on an open auction session. Bidder pays only the increment (difference from previous bid).
+// @Tags bids
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Session ID"
+// @Param request body PlaceBidRequest true "Bid details"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /sessions/{id}/bids [post]
 func (h *Handler) PlaceBid(c *gin.Context) {
 	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -126,7 +138,15 @@ func (h *Handler) PlaceBid(c *gin.Context) {
 	})
 }
 
-// ListBids returns all bids for a session
+// ListBids godoc
+// @Summary List bids for session
+// @Description Get all bids placed on an auction session
+// @Tags bids
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Session ID"
+// @Success 200 {array} models.Bid
+// @Router /sessions/{id}/bids [get]
 func (h *Handler) ListBids(c *gin.Context) {
 	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
