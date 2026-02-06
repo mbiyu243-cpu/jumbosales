@@ -37,6 +37,21 @@ func main() {
 	// Initialize handlers with dependencies
 	h := handlers.NewHandler(db)
 
+	// Root landing page
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"service":     "Jumbo Sales API",
+			"version":     "1.0.0",
+			"description": "Crowd-funded charity auction platform API",
+			"docs":        "/api/health",
+			"endpoints": gin.H{
+				"auth":          "/api/auth/login, /api/auth/register",
+				"sessions":      "/api/sessions",
+				"beneficiaries": "/api/beneficiaries",
+			},
+		})
+	})
+
 	// Health check endpoint
 	router.GET("/api/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "service": "jumbo-api"})
