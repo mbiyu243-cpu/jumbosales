@@ -37,6 +37,11 @@ func main() {
 	// Initialize handlers with dependencies
 	h := handlers.NewHandler(db)
 
+	// Health check endpoint
+	router.GET("/api/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok", "service": "jumbo-api"})
+	})
+
 	// Public routes (no auth required)
 	public := router.Group("/api")
 	{
