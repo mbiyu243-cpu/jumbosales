@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext'
 
 // Layout
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 
 // Pages
 import Home from './pages/Home'
@@ -40,9 +41,9 @@ function ProtectedRoute({ children, requiredRole }) {
 
 function App() {
   return (
-    <div className="min-vh-100">
+    <div className="d-flex flex-column min-vh-100">
       <Navbar />
-      <main className="container py-4">
+      <main className="container py-4 flex-grow-1">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -80,6 +81,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   )
 }
