@@ -1,0 +1,89 @@
+/* Jumbo Sales - Global Styles */
+
+:root {
+  --primary-color: #28a745;
+  --secondary-color: #17a2b8;
+  --accent-color: #ffc107;
+  --danger-color: #dc3545;
+  --dark-color: #343a40;
+  --light-color: #f8f9fa;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--light-color);
+}
+
+/* Auction Session Cards */
+.session-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.session-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Status Badges */
+.status-open {
+  background-color: var(--primary-color);
+}
+
+.status-closing {
+  background-color: var(--accent-color);
+  color: var(--dark-color);
+}
+
+.status-closed {
+  background-color: var(--secondary-color);
+}
+
+.status-complete {
+  background-color: var(--dark-color);
+}
+
+/* Bid List */
+.bid-item {
+  border-left: 4px solid var(--primary-color);
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background-color: white;
+}
+
+.bid-item.winning {
+  border-left-color: var(--accent-color);
+  background-color: #fff3cd;
+}
+
+/* Live Indicator */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-indicator::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background-color: var(--danger-color);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Price Display */
+.current-price {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.increment-amount {
+  font-size: 1.25rem;
+  color: var(--secondary-color);
+}
