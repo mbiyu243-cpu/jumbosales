@@ -33,7 +33,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_URL: https://jumbosalesbackend.qpcgroupafrica.com:8007
+          VITE_API_URL: https://jumbosalesbackend.qpcgroupafrica.com
         run: npm run build
 
       # Backend Build
