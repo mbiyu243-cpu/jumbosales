@@ -67,7 +67,7 @@ function SessionDetail() {
       setSession(response.data)
       setBids(response.data.bids || [])
     } catch (err) {
-      setError('Failed to load auction')
+      setError('Failed to load sale')
     } finally {
       setLoading(false)
     }
@@ -89,7 +89,7 @@ function SessionDetail() {
   }
 
   const handleCloseSession = async () => {
-    if (!confirm('Are you sure you want to close this auction? This cannot be undone.')) {
+    if (!confirm('Are you sure you want to close this sale? This cannot be undone.')) {
       return
     }
 
@@ -98,7 +98,7 @@ function SessionDetail() {
       await sessionApi.close(id)
       fetchSession()
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to close auction')
+      setError(err.response?.data?.error || 'Failed to close sale')
     } finally {
       setClosing(false)
     }
@@ -132,7 +132,7 @@ function SessionDetail() {
   }
 
   if (!session) {
-    return <div className="alert alert-danger">Auction not found</div>
+    return <div className="alert alert-danger">Sale not found</div>
   }
 
   const isOwner = session.cashier_id === user?.id
@@ -194,7 +194,7 @@ function SessionDetail() {
               {canClose && (
                 <div className="alert alert-warning">
                   <strong>Cashier Controls</strong>
-                  <p className="mb-2">Ready to close? Count 1, 2, 3 — if no one opposes, close the auction.</p>
+                  <p className="mb-2">Ready to close? Count 1, 2, 3 — if no one opposes, close the sale.</p>
                   <button
                     className="btn btn-danger"
                     onClick={handleCloseSession}
@@ -207,7 +207,7 @@ function SessionDetail() {
                       </>
                     ) : (
                       <>
-                        <i className="bi bi-hammer"></i> Close Auction
+                        <i className="bi bi-hammer"></i> Close Sale
                       </>
                     )}
                   </button>
@@ -217,7 +217,7 @@ function SessionDetail() {
               {/* Winner Donation */}
               {canDonate && (
                 <div className="alert alert-success">
-                  <strong>🎉 Congratulations! You won this auction!</strong>
+                  <strong>🎉 Congratulations! You won this sale!</strong>
                   <p>Now choose a beneficiary to receive "{session.item_name}":</p>
                   <div className="form-group">
                     <select
@@ -246,7 +246,7 @@ function SessionDetail() {
               {/* Session Complete */}
               {session.status === 'complete' && (
                 <div className="alert alert-info">
-                  <i className="bi bi-check-circle"></i> This auction is complete. 
+                  <i className="bi bi-check-circle"></i> This sale is complete. 
                   The item has been donated to a beneficiary.
                 </div>
               )}
@@ -287,7 +287,7 @@ function SessionDetail() {
             <div className="card">
               <div className="card-body text-center text-muted">
                 <i className="bi bi-lock display-4"></i>
-                <p className="mt-3">Bidding is closed for this auction</p>
+                <p className="mt-3">Bidding is closed for this sale</p>
               </div>
             </div>
           )}

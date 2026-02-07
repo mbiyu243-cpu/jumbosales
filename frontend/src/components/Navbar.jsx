@@ -25,7 +25,7 @@ function Navbar() {
           <ul className="navbar-nav mr-auto">
             <li className="nav-item">
               <Link className="nav-link" to="/sessions">
-                <i className="bi bi-collection"></i> Auctions
+                <i className="bi bi-collection"></i> Jumbo Sales
               </Link>
             </li>
             <li className="nav-item">
@@ -36,7 +36,7 @@ function Navbar() {
             {isCashier && (
               <li className="nav-item">
                 <Link className="nav-link" to="/sessions/create">
-                  <i className="bi bi-plus-circle"></i> New Auction
+                  <i className="bi bi-plus-circle"></i> New Sale
                 </Link>
               </li>
             )}

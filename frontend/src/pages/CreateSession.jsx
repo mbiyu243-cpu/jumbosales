@@ -42,7 +42,7 @@ function CreateSession() {
       })
       navigate(`/sessions/${response.data.id}`)
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create auction')
+      setError(err.response?.data?.error || 'Failed to create sale')
     } finally {
       setLoading(false)
     }
@@ -54,7 +54,7 @@ function CreateSession() {
         <div className="card shadow">
           <div className="card-header bg-success text-white">
             <h4 className="mb-0">
-              <i className="bi bi-plus-circle"></i> Start New Auction
+              <i className="bi bi-plus-circle"></i> Start New Sale
             </h4>
           </div>
           <div className="card-body p-4">
@@ -127,7 +127,7 @@ function CreateSession() {
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-lightning"></i> Start Auction
+                    <i className="bi bi-lightning"></i> Start Sale
                   </>
                 )}
               </button>

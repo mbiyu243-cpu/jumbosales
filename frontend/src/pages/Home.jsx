@@ -12,7 +12,7 @@ function Home() {
           <i className="bi bi-hammer text-success"></i> Jumbo Sales
         </h1>
         <p className="lead text-muted">
-          Crowd-Funded Charity Auctions — Everyone Contributes, Winners Give
+          Crowd-Funded Charity Sales — Everyone Contributes, Winners Give
         </p>
       </div>
 
@@ -66,11 +66,11 @@ function Home() {
         {isAuthenticated ? (
           <div>
             <Link to="/sessions" className="btn btn-success btn-lg mr-3">
-              <i className="bi bi-collection"></i> View Live Auctions
+              <i className="bi bi-collection"></i> View Live Sales
             </Link>
             {isCashier && (
               <Link to="/sessions/create" className="btn btn-outline-primary btn-lg">
-                <i className="bi bi-plus-circle"></i> Start an Auction
+                <i className="bi bi-plus-circle"></i> Start a Sale
               </Link>
             )}
           </div>

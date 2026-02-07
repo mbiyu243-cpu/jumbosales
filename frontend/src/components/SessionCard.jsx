@@ -42,7 +42,7 @@ function SessionCard({ session }) {
         <Link to={`/sessions/${id}`} className="btn btn-primary btn-block">
           {status === 'open' ? (
             <>
-              <i className="bi bi-lightning"></i> Join Auction
+              <i className="bi bi-lightning"></i> Join Sale
             </>
           ) : (
             <>

@@ -14,7 +14,7 @@ function Footer() {
               Jumbo Sales
             </h5>
             <p className="text-muted small mb-0">
-              Crowd-funded charity auctions. Bid together, give together.
+              Crowd-funded charity sales. Bid together, give together.
             </p>
           </div>
 
@@ -24,7 +24,7 @@ function Footer() {
             <ul className="list-unstyled mb-0">
               <li>
                 <Link to="/sessions" className="text-muted small">
-                  <i className="bi bi-collection mr-1"></i> Auctions
+                  <i className="bi bi-collection mr-1"></i> Jumbo Sales
                 </Link>
               </li>
               <li>

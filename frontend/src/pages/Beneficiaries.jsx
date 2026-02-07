@@ -75,7 +75,7 @@ function Beneficiaries() {
       </div>
 
       <p className="text-muted mb-4">
-        These are the organizations and individuals who can receive donated items from auction winners.
+        These are the organizations and individuals who can receive donated items from Jumbo Sale winners.
       </p>
 
       {/* Error */}

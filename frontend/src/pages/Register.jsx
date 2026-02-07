@@ -118,8 +118,8 @@ function Register() {
                   onChange={handleChange}
                   disabled={loading}
                 >
-                  <option value="bidder">Participate in auctions (Bidder)</option>
-                  <option value="cashier">Host auctions (Cashier)</option>
+                  <option value="bidder">Participate in sales (Bidder)</option>
+                  <option value="cashier">Host sales (Cashier)</option>
                 </select>
               </div>
 

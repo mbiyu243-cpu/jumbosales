@@ -22,7 +22,7 @@ function Sessions() {
       const response = await sessionApi.list(filter || undefined)
       setSessions(response.data)
     } catch (err) {
-      setError('Failed to load auctions')
+      setError('Failed to load sales')
     } finally {
       setLoading(false)
     }
@@ -33,11 +33,11 @@ function Sessions() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>
-          <i className="bi bi-collection"></i> Auctions
+          <i className="bi bi-collection"></i> Jumbo Sales
         </h2>
         {isCashier && (
           <Link to="/sessions/create" className="btn btn-success">
-            <i className="bi bi-plus-circle"></i> New Auction
+            <i className="bi bi-plus-circle"></i> New Sale
           </Link>
         )}
       </div>
@@ -84,7 +84,7 @@ function Sessions() {
         </div>
       ) : sessions.length === 0 ? (
         <div className="alert alert-info">
-          <i className="bi bi-info-circle"></i> No auctions found.
+          <i className="bi bi-info-circle"></i> No sales found.
           {isCashier && (
             <span> <Link to="/sessions/create">Start one now!</Link></span>
           )}
