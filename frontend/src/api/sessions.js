@@ -32,3 +32,21 @@ export const beneficiaryApi = {
   // Create new beneficiary (cashier only)
   create: (data) => api.post('/beneficiaries', data),
 }
+
+// Product API functions
+export const productApi = {
+  // List all products
+  list: (category) => api.get('/products', { params: { category } }),
+
+  // Get single product
+  get: (id) => api.get(`/products/${id}`),
+
+  // Create new product (cashier only)
+  create: (data) => api.post('/products', data),
+
+  // Update product (cashier only)
+  update: (id, data) => api.put(`/products/${id}`, data),
+
+  // Delete product (cashier only)
+  delete: (id) => api.delete(`/products/${id}`),
+}

@@ -135,3 +135,18 @@ type Donation struct {
 	Donor       *User           `gorm:"foreignKey:DonorID" json:"donor,omitempty"`
 	Beneficiary *Beneficiary    `gorm:"foreignKey:BeneficiaryID" json:"beneficiary,omitempty"`
 }
+
+// Product represents a catalog item that can be used in auction sessions
+type Product struct {
+	gorm.Model
+	Name           string  `gorm:"not null" json:"name"`
+	Description    string  `json:"description"`
+	Category       string  `json:"category"`                        // e.g., "furniture", "electronics", "clothing"
+	SuggestedPrice float64 `gorm:"not null" json:"suggested_price"` // Suggested starting price in KES
+	ImageURL       string  `json:"image_url,omitempty"`
+	IsActive       bool    `gorm:"default:true" json:"is_active"`
+	CreatedByID    uint    `gorm:"not null" json:"created_by_id"`
+
+	// Relationships
+	CreatedBy *User `gorm:"foreignKey:CreatedByID" json:"created_by,omitempty"`
+}

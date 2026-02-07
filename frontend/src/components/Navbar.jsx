@@ -33,6 +33,11 @@ function Navbar() {
                 <i className="bi bi-heart"></i> Beneficiaries
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/products">
+                <i className="bi bi-box-seam"></i> Products
+              </Link>
+            </li>
             {isCashier && (
               <li className="nav-item">
                 <Link className="nav-link" to="/sessions/create">

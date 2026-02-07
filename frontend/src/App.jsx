@@ -13,6 +13,7 @@ import Sessions from './pages/Sessions'
 import SessionDetail from './pages/SessionDetail'
 import CreateSession from './pages/CreateSession'
 import Beneficiaries from './pages/Beneficiaries'
+import Products from './pages/Products'
 
 // Protected Route Component
 function ProtectedRoute({ children, requiredRole }) {
@@ -50,6 +51,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/beneficiaries" element={<Beneficiaries />} />
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute>
+                <Products />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected Routes */}
           <Route

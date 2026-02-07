@@ -106,6 +106,13 @@ func main() {
 
 		// Beneficiary management (cashier only)
 		protected.POST("/beneficiaries", h.CreateBeneficiary)
+
+		// Product catalog routes
+		protected.GET("/products", h.Product.List)
+		protected.GET("/products/:id", h.Product.Get)
+		protected.POST("/products", h.Product.Create)
+		protected.PUT("/products/:id", h.Product.Update)
+		protected.DELETE("/products/:id", h.Product.Delete)
 	}
 
 	// Get port from environment or default to 8080
