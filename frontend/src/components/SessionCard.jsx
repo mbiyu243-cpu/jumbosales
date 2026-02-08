@@ -6,7 +6,7 @@ import { formatKES, getStatusClass } from '../utils/format'
  * Used in session list views
  */
 function SessionCard({ session }) {
-  const { id, item_name, item_description, current_price, total_collected, status, cashier } = session
+  const { ID, item_name, item_description, current_price, total_collected, status, cashier } = session
 
   return (
     <div className="card session-card h-100">
@@ -39,7 +39,7 @@ function SessionCard({ session }) {
       </div>
 
       <div className="card-footer bg-white">
-        <Link to={`/sessions/${id}`} className="btn btn-primary btn-block">
+        <Link to={`/sessions/${ID}`} className="btn btn-primary btn-block">
           {status === 'open' ? (
             <>
               <i className="bi bi-lightning"></i> Join Sale
