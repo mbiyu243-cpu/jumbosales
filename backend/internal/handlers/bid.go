@@ -155,7 +155,7 @@ func (h *Handler) ListBids(c *gin.Context) {
 	}
 
 	var bids []models.Bid
-	if err := h.db.Preload("Bidder").Where("session_id = ?", sessionID).
+	if err := h.db.Preload("Bidder").Preload("Payment").Where("session_id = ?", sessionID).
 		Order("bid_order ASC").Find(&bids).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bids"})
 		return

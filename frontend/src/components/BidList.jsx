@@ -37,7 +37,14 @@ function BidList({ bids, currentUserId }) {
               <small className="text-success">+{formatKES(bid.increment_paid)}</small>
             </div>
           </div>
-          <small className="text-muted">{formatRelativeTime(bid.CreatedAt)}</small>
+          <div className="d-flex justify-content-between align-items-center">
+            <small className="text-muted">{formatRelativeTime(bid.CreatedAt)}</small>
+            {bid.payment?.transaction_ref && (
+              <small className="text-info">
+                <i className="bi bi-phone"></i> {bid.payment.transaction_ref}
+              </small>
+            )}
+          </div>
         </div>
       ))}
     </div>
