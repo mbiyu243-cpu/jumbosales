@@ -15,14 +15,14 @@ function BidList({ bids, currentUserId }) {
 
   // Sort by bid_order descending (latest first)
   const sortedBids = [...bids].sort((a, b) => b.bid_order - a.bid_order)
-  const latestBidId = sortedBids[0]?.id
+  const latestBidId = sortedBids[0]?.ID
 
   return (
     <div className="bid-list">
       {sortedBids.map((bid) => (
         <div
-          key={bid.id}
-          className={`bid-item ${bid.id === latestBidId ? 'winning' : ''}`}
+          key={bid.ID}
+          className={`bid-item ${bid.ID === latestBidId ? 'winning' : ''}`}
         >
           <div className="d-flex justify-content-between align-items-center">
             <div>
@@ -37,7 +37,7 @@ function BidList({ bids, currentUserId }) {
               <small className="text-success">+{formatKES(bid.increment_paid)}</small>
             </div>
           </div>
-          <small className="text-muted">{formatRelativeTime(bid.created_at)}</small>
+          <small className="text-muted">{formatRelativeTime(bid.CreatedAt)}</small>
         </div>
       ))}
     </div>
