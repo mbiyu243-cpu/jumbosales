@@ -19,6 +19,8 @@ function SessionDetail() {
   const [closing, setClosing] = useState(false)
   const [donating, setDonating] = useState(false)
   const [selectedBeneficiary, setSelectedBeneficiary] = useState('')
+  const [timeLeft, setTimeLeft] = useState('')
+  const [isEndingSoon, setIsEndingSoon] = useState(false)
 
   // SSE for real-time updates
   const handleSSEMessage = useCallback((event) => {
@@ -42,23 +44,74 @@ function SessionDetail() {
         ...prev,
       ])
     } else if (event.type === 'session_closed') {
-      setSession((prev) => ({
-        ...prev,
-        status: 'closed',
-        winner_id: event.data.winner_id,
-      }))
-    }
+  setTimeLeft('Ended')
+  setIsEndingSoon(false)
+
+  setSession((prev) => ({
+    ...prev,
+    status: 'closed',
+    winner_id: event.data.winner_id || prev?.winner_id,
+    winner: event.data.winner || prev?.winner,
+  }))
+}
   }, [])
 
   const { connected } = useSSE(
     session?.status === 'open' ? `/api/sessions/${id}/stream` : null,
     { onMessage: handleSSEMessage, enabled: session?.status === 'open' }
   )
+  const calculateTimeLeft = (endTime) => {
+  if (!endTime) return { label: '', ended: false, endingSoon: false }
 
-  useEffect(() => {
-    fetchSession()
-    fetchBeneficiaries()
-  }, [id])
+  const diff = new Date(endTime) - new Date()
+
+  if (diff <= 0) {
+    return { label: 'Ended', ended: true, endingSoon: false }
+  }
+
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff / (1000 * 60)) % 60)
+  const seconds = Math.floor((diff / 1000) % 60)
+
+  return {
+    label: `${hours}h ${minutes}m ${seconds}s`,
+    ended: false,
+    endingSoon: diff < 60000,
+  }
+}
+ useEffect(() => {
+  if (!session?.end_time) return
+
+  const updateTimer = () => {
+    const result = calculateTimeLeft(session.end_time)
+
+    setTimeLeft(result.label)
+    setIsEndingSoon(result.endingSoon)
+
+    if (result.ended) {
+      setTimeLeft('Ended')
+      setIsEndingSoon(false)
+
+      if (session.status === 'open') {
+        fetchSession()
+      }
+
+      return true
+    }
+
+    return false
+  }
+
+  const endedImmediately = updateTimer()
+  if (endedImmediately) return
+
+  const interval = setInterval(() => {
+    const ended = updateTimer()
+    if (ended) clearInterval(interval)
+  }, 1000)
+
+  return () => clearInterval(interval)
+}, [session?.end_time, session?.status])
 
   const fetchSession = async () => {
     setLoading(true)
@@ -81,6 +134,10 @@ function SessionDetail() {
       console.error('Failed to load beneficiaries')
     }
   }
+  useEffect(() => {
+    fetchSession()
+    fetchBeneficiaries()
+  }, [id])
 
   const handlePlaceBid = async (bidData) => {
     await sessionApi.placeBid(id, bidData)
@@ -137,7 +194,8 @@ function SessionDetail() {
 
   const isOwner = session.cashier_id === user?.id
   const isWinner = session.winner_id === user?.id
-  const canBid = session.status === 'open'
+  const timerEnded = timeLeft === 'Ended'
+  const canBid = session.status === 'open' && !timerEnded
   const canClose = isOwner && session.status === 'open' && bids.length > 0
   const canDonate = isWinner && session.status === 'closed'
 
@@ -249,9 +307,23 @@ function SessionDetail() {
                   <i className="bi bi-check-circle"></i> This sale is complete. 
                   The item has been donated to a beneficiary.
                 </div>
+              )}  
+
+              {/* Winner */}              
+              {session.status === 'closed' && (
+                <div className="alert alert-success">
+                  🏆 Winner: <strong>{session.winner?.name || 'Winner will appear after refresh'}</strong>
+                </div>
               )}
+  
             </div>
           </div>
+          {session?.end_time && (
+  <div className={`alert ${isEndingSoon ? 'alert-danger' : 'alert-warning'} d-flex justify-content-between`}>
+    <strong>⏳ Time Left:</strong>
+    <span className="fw-bold">{timeLeft}</span>
+  </div>
+)}
 
           {/* Bid List */}
           <div className="card">
@@ -268,29 +340,29 @@ function SessionDetail() {
 
         {/* Right: Bid Form */}
         <div className="col-lg-4">
-          {canBid ? (
-            <div className="card sticky-top" style={{ top: '1rem' }}>
-              <div className="card-header bg-success text-white">
-                <h5 className="mb-0">
-                  <i className="bi bi-lightning"></i> Place Your Bid
-                </h5>
-              </div>
-              <div className="card-body">
-                <BidForm
-                  currentPrice={session.current_price}
-                  onSubmit={handlePlaceBid}
-                  disabled={!canBid}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="card">
-              <div className="card-body text-center text-muted">
-                <i className="bi bi-lock display-4"></i>
-                <p className="mt-3">Bidding is closed for this sale</p>
-              </div>
-            </div>
-          )}
+         <div className="card sticky-top" style={{ top: '1rem' }}>
+  <div className={canBid ? 'card-header bg-success text-white' : 'card-header bg-secondary text-white'}>
+    <h5 className="mb-0">
+      <i className="bi bi-lightning"></i> Place Your Bid
+    </h5>
+  </div>
+
+  <div className="card-body">
+    {!canBid && (
+      <div className="alert alert-secondary">
+        🔒 Bidding is closed for this sale
+      </div>
+    )}
+
+    <BidForm
+      currentPrice={session.current_price}
+      sessionId={session.ID}
+      onSubmit={handlePlaceBid}
+      disabled={!canBid}
+    />
+  </div>
+</div>
+          
         </div>
       </div>
     </div>

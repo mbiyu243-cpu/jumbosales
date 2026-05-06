@@ -50,13 +50,17 @@ type AuctionSession struct {
 	CurrentPrice    float64       `gorm:"not null" json:"current_price"`    // Latest bid amount
 	TotalCollected  float64       `gorm:"default:0" json:"total_collected"` // Sum of all payments
 	Status          SessionStatus `gorm:"default:open" json:"status"`
+	EndTime         *time.Time    `json:"end_time"`
 	CashierID       uint          `gorm:"not null" json:"cashier_id"`
-	WinnerID        *uint         `json:"winner_id,omitempty"` // Last bidder when closed
+	WinnerID        *uint         `json:"winner_id,omitempty"`  // Last bidder when closed
+	ProductID       *uint         `json:"product_id,omitempty"` // Optional: link to product catalog
+	IsArchived      bool          `gorm:"default:false" json:"is_archived"`
 
 	// Relationships
-	Cashier *User `gorm:"foreignKey:CashierID" json:"cashier,omitempty"`
-	Winner  *User `gorm:"foreignKey:WinnerID" json:"winner,omitempty"`
-	Bids    []Bid `gorm:"foreignKey:SessionID" json:"bids,omitempty"`
+	Cashier *User    `gorm:"foreignKey:CashierID" json:"cashier,omitempty"`
+	Winner  *User    `gorm:"foreignKey:WinnerID" json:"winner,omitempty"`
+	Product *Product `gorm:"foreignKey:ProductID" json:"product,omitempty"`
+	Bids    []Bid    `gorm:"foreignKey:SessionID" json:"bids,omitempty"`
 }
 
 // Bid represents a single bid in an auction session
@@ -116,6 +120,7 @@ type Beneficiary struct {
 	Category    string `json:"category"` // e.g., "orphanage", "school", "hospital"
 	Location    string `json:"location"` // Physical location
 	ContactInfo string `json:"contact_info"`
+	PhotoURL    string `json:"photo_url"`
 	IsActive    bool   `gorm:"default:true" json:"is_active"`
 
 	// Relationships
@@ -149,4 +154,28 @@ type Product struct {
 
 	// Relationships
 	CreatedBy *User `gorm:"foreignKey:CreatedByID" json:"created_by,omitempty"`
+}
+
+// MpesaTransaction tracks M-Pesa STK Push transactions
+type MpesaTransaction struct {
+	gorm.Model
+	CheckoutRequestID  string    `gorm:"uniqueIndex;not null" json:"checkout_request_id"`
+	MerchantRequestID  string    `json:"merchant_request_id"`
+	SessionID          uint      `gorm:"index" json:"session_id"`
+	BidID              *uint     `gorm:"index" json:"bid_id"` // Nullable - bid happens after payment
+	UserID             uint      `gorm:"index" json:"user_id"`
+	PhoneNumber        string    `gorm:"not null" json:"phone_number"`
+	Amount             float64   `gorm:"not null" json:"amount"`
+	Status             string    `gorm:"default:pending" json:"status"` // pending, completed, failed
+	ResponseCode       string    `json:"response_code"`
+	ResponseDesc       string    `json:"response_desc"`
+	ResultCode         int       `json:"result_code"`
+	ResultDesc         string    `json:"result_desc"`
+	MpesaReceiptNumber string    `json:"mpesa_receipt_number,omitempty"`
+	TransactionDate    time.Time `json:"transaction_date,omitempty"`
+
+	// Relationships
+	Session *AuctionSession `gorm:"foreignKey:SessionID" json:"session,omitempty"`
+	Bid     *Bid            `gorm:"foreignKey:BidID" json:"bid,omitempty"`
+	User    *User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }

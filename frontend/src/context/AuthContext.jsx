@@ -21,10 +21,12 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.get('/me')
       setUser(response.data)
+      console.log('USER:', response.data)
     } catch (error) {
       // Token invalid, clear it
       logout()
     } finally {
+      console.log('AUTH LOADING DONE')
       setLoading(false)
     }
   }

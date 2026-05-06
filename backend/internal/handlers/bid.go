@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/titusqpc/jumbo_sales/backend/internal/models"
@@ -51,10 +52,20 @@ func (h *Handler) PlaceBid(c *gin.Context) {
 		return
 	}
 
-	if session.Status != models.StatusOpen {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Session is not open for bidding"})
-		return
-	}
+	// Check if session has expired
+if session.EndTime != nil && time.Now().After(*session.EndTime) {
+	session.Status = models.StatusClosed
+	h.db.Save(&session)
+
+	c.JSON(http.StatusBadRequest, gin.H{"error": "Bidding time has ended"})
+	return
+}
+
+// Check if session is open
+if session.Status != models.StatusOpen {
+	c.JSON(http.StatusBadRequest, gin.H{"error": "Session is not open for bidding"})
+	return
+}
 
 	// Validate bid is higher than current price
 	if req.BidAmount <= session.CurrentPrice {

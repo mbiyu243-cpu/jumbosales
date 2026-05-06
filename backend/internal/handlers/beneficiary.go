@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"log"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/titusqpc/jumbo_sales/backend/internal/models"
@@ -10,18 +15,18 @@ import (
 
 // CreateBeneficiaryRequest defines payload for adding a beneficiary
 type CreateBeneficiaryRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Category    string `json:"category"` // orphanage, school, hospital, etc.
-	Location    string `json:"location"`
-	ContactInfo string `json:"contact_info"`
+	Name        string `form:"name" binding:"required"`
+	Description string `form:"description"`
+	Category    string `form:"category"`
+	Location    string `form:"location"`
+	ContactInfo string `form:"contact_info"`
 }
 
 // CreateBeneficiary godoc
 // @Summary Add beneficiary
 // @Description Add a new beneficiary to the system (cashier/admin only)
 // @Tags beneficiaries
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Security BearerAuth
 // @Param request body CreateBeneficiaryRequest true "Beneficiary details"
@@ -35,21 +40,38 @@ func (h *Handler) CreateBeneficiary(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only cashiers can add beneficiaries"})
 		return
 	}
-
-	var req CreateBeneficiaryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+var req CreateBeneficiaryRequest
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	file, err := c.FormFile("photo")
+var photoURL string
+
+if err == nil {
+    uploadsDir := "./uploads"
+
+    if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+        os.MkdirAll(uploadsDir, 0755)
+    }
+
+    filename := fmt.Sprintf("beneficiary_%d_%s", time.Now().Unix(), file.Filename)
+    filePath := filepath.Join(uploadsDir, filename)
+
+    if err := c.SaveUploadedFile(file, filePath); err == nil {
+        photoURL = "/uploads/" + filename
+    }
+}
 
 	beneficiary := models.Beneficiary{
-		Name:        req.Name,
-		Description: req.Description,
-		Category:    req.Category,
-		Location:    req.Location,
-		ContactInfo: req.ContactInfo,
-		IsActive:    true,
-	}
+    Name:        req.Name,
+    Description: req.Description,
+    Category:    req.Category,
+    Location:    req.Location,
+    ContactInfo: req.ContactInfo,
+    PhotoURL:    photoURL,
+    IsActive:    true,
+    }
 
 	if err := h.db.Create(&beneficiary).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create beneficiary"})
@@ -85,6 +107,100 @@ func (h *Handler) ListBeneficiaries(c *gin.Context) {
 	c.JSON(http.StatusOK, beneficiaries)
 }
 
+func (h *Handler) UpdateBeneficiary(c *gin.Context) {
+	userRole := c.GetString("userRole")
+	if userRole != "cashier" && userRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only cashiers can update beneficiaries"})
+		return
+	}
+
+	id := c.Param("id")
+
+	var beneficiary models.Beneficiary
+	if err := h.db.First(&beneficiary, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Beneficiary not found"})
+		return
+	}
+
+	var req CreateBeneficiaryRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Update fields
+	beneficiary.Name = req.Name
+	beneficiary.Description = req.Description
+	beneficiary.Category = req.Category
+	beneficiary.Location = req.Location
+	beneficiary.ContactInfo = req.ContactInfo
+
+	// Handle optional new photo
+	file, err := c.FormFile("photo")
+if err == nil {
+    // delete old image
+    if beneficiary.PhotoURL != "" {
+        oldPath := "." + beneficiary.PhotoURL
+       if err := os.Remove(oldPath); err != nil {
+    log.Println("Failed to delete old image:", err)
+}
+    }
+
+    uploadsDir := "./uploads"
+
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+    os.MkdirAll(uploadsDir, 0755)
+}
+
+    filename := fmt.Sprintf("beneficiary_%d_%s", time.Now().Unix(), file.Filename)
+    filePath := filepath.Join(uploadsDir, filename)
+
+    if err := c.SaveUploadedFile(file, filePath); err == nil {
+        beneficiary.PhotoURL = "/uploads/" + filename
+    }
+}
+
+	if err := h.db.Save(&beneficiary).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update beneficiary"})
+		return
+	}
+
+	c.JSON(http.StatusOK, beneficiary)
+}
+
+func (h *Handler) DeleteBeneficiary(c *gin.Context) {
+	userRole := c.GetString("userRole")
+    if userRole != "cashier" && userRole != "admin" {
+	c.JSON(http.StatusForbidden, gin.H{"error": "Only cashiers can delete beneficiaries"})
+	return
+}
+	id, err := strconv.Atoi(c.Param("id"))
+if err != nil {
+    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+    return
+}
+
+	var beneficiary models.Beneficiary
+	if err := h.db.First(&beneficiary, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Beneficiary not found"})
+		return
+	}
+    // delete image file
+	if beneficiary.PhotoURL != "" {
+		filePath := "." + beneficiary.PhotoURL
+		if err := os.Remove(filePath); err != nil {
+        log.Println("Failed to delete file:", err)
+}
+	}
+	beneficiary.IsActive = false
+
+	if err := h.db.Save(&beneficiary).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete beneficiary"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Beneficiary deleted successfully"})
+}
 // DonateItemRequest defines payload for donating the won item
 type DonateItemRequest struct {
 	BeneficiaryID uint   `json:"beneficiary_id" binding:"required"`

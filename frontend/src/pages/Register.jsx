@@ -9,7 +9,7 @@ function Register() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'bidder',
+    role: 'bidder', // Fixed role for all new registrations
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -107,20 +107,6 @@ function Register() {
                   required
                   disabled={loading}
                 />
-              </div>
-
-              <div className="form-group">
-                <label>I want to...</label>
-                <select
-                  name="role"
-                  className="form-control"
-                  value={formData.role}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <option value="bidder">Participate in sales (Bidder)</option>
-                  <option value="cashier">Host sales (Cashier)</option>
-                </select>
               </div>
 
               <div className="form-group">

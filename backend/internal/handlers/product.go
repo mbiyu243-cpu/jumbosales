@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/titusqpc/jumbo_sales/backend/internal/models"
@@ -234,4 +239,82 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
+}
+
+// UploadProductImage godoc
+// @Summary Upload product image
+// @Description Upload an image for a product
+// @Tags products
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param image formData file true "Product image"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /products/upload-image [post]
+func (h *ProductHandler) UploadImage(c *gin.Context) {
+	// Get file from form
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image provided"})
+		return
+	}
+
+	// Validate file size (max 5MB)
+	if file.Size > 5*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Image size must be less than 5MB"})
+		return
+	}
+
+	// Validate file type
+	allowedTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/png":  true,
+		"image/gif":  true,
+		"image/webp": true,
+	}
+	if !allowedTypes[file.Header.Get("Content-Type")] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Only JPEG, PNG, GIF, and WebP images are allowed"})
+		return
+	}
+
+	// Create uploads directory if it doesn't exist
+	uploadsDir := "./uploads"
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		os.MkdirAll(uploadsDir, 0755)
+	}
+
+	// Generate unique filename
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("product_%d%s", time.Now().UnixNano(), ext)
+	filepath := filepath.Join(uploadsDir, filename)
+
+	// Save file
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open uploaded file"})
+		return
+	}
+	defer src.Close()
+
+	dst, err := os.Create(filepath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
+		return
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
+		return
+	}
+
+	// Return URL relative to web root
+	imageURL := "/uploads/" + filename
+
+	c.JSON(http.StatusOK, gin.H{
+		"image_url": imageURL,
+		"filename":  filename,
+	})
 }

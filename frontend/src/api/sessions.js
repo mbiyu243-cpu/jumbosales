@@ -3,7 +3,13 @@ import api from './client'
 // Session API functions
 export const sessionApi = {
   // Get all sessions (optionally filtered by status)
-  list: (status) => api.get('/sessions', { params: { status } }),
+  list: (status, archived) =>
+  api.get('/sessions', {
+    params: {
+      status,
+      archived,
+    },
+  }),
 
   // Get single session with bids
   get: (id) => api.get(`/sessions/${id}`),
@@ -22,15 +28,26 @@ export const sessionApi = {
 
   // Donate item to beneficiary (winner only)
   donate: (id, data) => api.post(`/sessions/${id}/donate`, data),
+
+  // Delete session
+  delete: (id) => api.delete(`/sessions/${id}`),
 }
 
 // Beneficiary API functions
 export const beneficiaryApi = {
-  // List all beneficiaries
   list: (category) => api.get('/beneficiaries', { params: { category } }),
 
-  // Create new beneficiary (cashier only)
-  create: (data) => api.post('/beneficiaries', data),
+  create: (data) =>
+    api.post('/beneficiaries', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  update: (id, data) =>
+    api.put(`/beneficiaries/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  delete: (id) => api.delete(`/beneficiaries/${id}`),
 }
 
 // Product API functions

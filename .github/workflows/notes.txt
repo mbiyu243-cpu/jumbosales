@@ -1,0 +1,1 @@
+sshpass -p 'Quantum@2030~!' ssh deploy@161.97.176.220 "sudo journalctl -u jumbo-api -f"

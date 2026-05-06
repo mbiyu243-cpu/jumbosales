@@ -3,126 +3,110 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/titusqpc/jumbo_sales/backend/docs"
+	"github.com/gin-contrib/cors"
+
 	"github.com/titusqpc/jumbo_sales/backend/internal/config"
 	"github.com/titusqpc/jumbo_sales/backend/internal/handlers"
 	"github.com/titusqpc/jumbo_sales/backend/internal/middleware"
 )
 
-// @title Jumbo Sales API
-// @version 1.0
-// @description Crowd-funded charity auction platform API. Bidders pay increments, winners donate items to beneficiaries.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name QPC Group Africa
-// @contact.url https://qpcgroupafrica.com
-// @contact.email titus@qpcgroupafrica.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host jumbosalesbackend.qpcgroupafrica.com
-// @BasePath /api
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Type "Bearer" followed by a space and JWT token.
-
 func main() {
-	// Load environment variables
+	// Load .env
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+		log.Println("No .env file found")
 	}
 
-	// Initialize database connection
+	// Connect DB
 	db, err := config.InitDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatal(err)
 	}
 
 	// Run migrations
-	if err := config.RunMigrations(db); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
+	config.RunMigrations(db)
 
-	// Initialize Gin router
-	router := gin.Default()
+	// Gin router
+	r := gin.Default()
 
-	// Apply global middleware
-	router.Use(middleware.CORS())
+	r.Use(cors.New(cors.Config{
+	AllowOrigins: []string{
+		"https://stimuli-stylus-repackage.ngrok-free.dev",
+	},
+	AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	AllowHeaders: []string{
+		"Origin",
+		"Content-Type",
+		"Authorization",
+		"Bypass-Tunnel-Reminder",
+		"bypass-tunnel-reminder",
+	},
+	AllowCredentials: false,
+	AllowWildcard: true,
+}))
 
-	// Initialize handlers with dependencies
+	// Serve uploaded images
+    uploadsPath := filepath.Join(".", "uploads")
+    absUploadsPath, _ := filepath.Abs(uploadsPath)
+    log.Println("Serving uploads from:", absUploadsPath)
+
+    r.Static("/uploads", absUploadsPath)
+
+	// Handlers
 	h := handlers.NewHandler(db)
 
-	// Root landing page - redirect to Swagger
-	router.GET("/", func(c *gin.Context) {
-		c.Redirect(302, "/swagger/index.html")
+	// Health check
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
 	})
 
-	// Swagger documentation
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+// Public auth routes
+api := r.Group("/api")
+{
+	api.POST("/auth/register", h.Register)
+	api.POST("/auth/login", h.Login)
+	api.GET("/beneficiaries", h.ListBeneficiaries)
+}
 
-	// Health check endpoint
-	router.GET("/api/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok", "service": "jumbo-api"})
-	})
+// Protected routes
+protected := api.Group("")
+protected.Use(middleware.JWTAuth())
+{
+	protected.GET("/me", h.GetCurrentUser)
+	protected.PUT("/me/password", h.ChangePassword)
+	protected.PUT("/me/profile", h.UpdateProfile)
 
-	// Public routes (no auth required)
-	public := router.Group("/api")
-	{
-		public.POST("/auth/register", h.Register)
-		public.POST("/auth/login", h.Login)
-		public.GET("/beneficiaries", h.ListBeneficiaries)
-	}
+	protected.POST("/sessions", h.CreateSession)
+	protected.DELETE("/beneficiaries/:id", h.DeleteBeneficiary)
+	protected.PUT("/beneficiaries/:id", h.UpdateBeneficiary)
+	protected.GET("/sessions", h.ListSessions)
+	protected.GET("/sessions/:id", h.GetSession)
+	protected.POST("/sessions/:id/close", h.CloseSession)
+	protected.POST("/sessions/:id/bids", h.PlaceBid)
+	protected.GET("/sessions/:id/bids", h.ListBids)
+	protected.POST("/sessions/:id/donate", h.DonateItem)
+	protected.DELETE("/sessions/:id", h.DeleteSession)
 
-	// Protected routes (JWT auth required)
-	protected := router.Group("/api")
-	protected.Use(middleware.JWTAuth())
-	{
-		// User routes
-		protected.GET("/me", h.GetCurrentUser)
+	protected.POST("/beneficiaries", h.CreateBeneficiary)
 
-		// Auction session routes
-		protected.POST("/sessions", h.CreateSession)
-		protected.GET("/sessions", h.ListSessions)
-		protected.GET("/sessions/:id", h.GetSession)
-		protected.POST("/sessions/:id/close", h.CloseSession)
-
-		// Bidding routes
-		protected.POST("/sessions/:id/bids", h.PlaceBid)
-		protected.GET("/sessions/:id/bids", h.ListBids)
-
-		// Donation routes (winner selects beneficiary)
-		protected.POST("/sessions/:id/donate", h.DonateItem)
-
-		// SSE endpoint for real-time bid updates
-		protected.GET("/sessions/:id/stream", h.StreamBids)
-
-		// Beneficiary management (cashier only)
-		protected.POST("/beneficiaries", h.CreateBeneficiary)
-
-		// Product catalog routes
-		protected.GET("/products", h.Product.List)
-		protected.GET("/products/:id", h.Product.Get)
-		protected.POST("/products", h.Product.Create)
-		protected.PUT("/products/:id", h.Product.Update)
-		protected.DELETE("/products/:id", h.Product.Delete)
-	}
-
-	// Get port from environment or default to 8080
+	protected.GET("/products", h.Product.List)
+	protected.GET("/products/:id", h.Product.Get)
+	protected.POST("/products", h.Product.Create)
+	protected.PUT("/products/:id", h.Product.Update)
+	protected.DELETE("/products/:id", h.Product.Delete)
+	protected.POST("/products/upload-image", h.Product.UploadImage)
+}
+	// Port
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on port %s", port)
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	log.Println("Server starting on port", port)
+	r.Run(":" + port)
 }

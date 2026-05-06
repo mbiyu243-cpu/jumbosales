@@ -42,6 +42,7 @@ func RunMigrations(db *gorm.DB) error {
 		&models.Donation{},
 		&models.Payment{},
 		&models.Product{},
+		&models.MpesaTransaction{},
 	)
 }
 

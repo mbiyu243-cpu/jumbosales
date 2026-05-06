@@ -1,20 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 import { productApi } from '../api/sessions'
+import api from '../api/client'
 
 function Products() {
   const { isCashier } = useAuth()
+  const navigate = useNavigate()
+  const { addToCart, buyNow } = useCart()
+  const handleAddToCart = (product) => {
+  addToCart(product)
+  alert(`${product.name} added to cart`)
+  navigate('/cart')   // 👈 ADD THIS LINE
+}
+const handleBuyNow = (product) => {
+  buyNow(product)
+  navigate('/checkout')
+}
+
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
     suggested_price: '',
-    image_url: ''
+    image_url: '',
+    images: [] // Array of uploaded image URLs
   })
 
   useEffect(() => {
@@ -31,6 +49,75 @@ function Products() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const onDrop = useCallback(async (acceptedFiles) => {
+    if (acceptedFiles.length === 0) return
+
+    setUploadingImage(true)
+    try {
+      const uploadedUrls = []
+
+      // Upload each file
+      for (const file of acceptedFiles) {
+        const uploadFormData = new FormData()
+        uploadFormData.append('image', file)
+
+        const response = await api.post('/products/upload-image', uploadFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+
+        uploadedUrls.push(response.data.image_url)
+      }
+
+      // Add to images array
+      setFormData({
+        ...formData,
+        images: [...formData.images, ...uploadedUrls],
+        image_url: uploadedUrls[0] || formData.image_url // Set first as primary
+      })
+      setError('')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to upload images')
+    } finally {
+      setUploadingImage(false)
+    }
+  }, [formData])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }
+  })
+
+  const handleRemoveImage = (index) => {
+    const newImages = formData.images.filter((_, i) => i !== index)
+    setFormData({
+      ...formData,
+      images: newImages,
+      image_url: newImages[0] || '' // Set first as primary, or empty
+    })
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      const uploadFormData = new FormData()
+      uploadFormData.append('image', file)
+
+      const response = await api.post('/products/upload-image', uploadFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      setFormData({ ...formData, image_url: response.data.image_url })
+      setError('')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to upload image')
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -66,9 +153,23 @@ function Products() {
       description: product.description || '',
       category: product.category || '',
       suggested_price: product.suggested_price.toString(),
-      image_url: product.image_url || ''
+      image_url: product.image_url || '',
+      images: product.image_url ? [product.image_url] : []
     })
     setShowForm(true)
+  }
+
+  const handleCancel = () => {
+    setShowForm(false)
+    setEditingProduct(null)
+    setFormData({
+      name: '',
+      description: '',
+      category: '',
+      suggested_price: '',
+      image_url: '',
+      images: []
+    })
   }
 
   const handleDelete = async (id) => {
@@ -80,12 +181,6 @@ function Products() {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete product')
     }
-  }
-
-  const handleCancel = () => {
-    setShowForm(false)
-    setEditingProduct(null)
-    setFormData({ name: '', description: '', category: '', suggested_price: '', image_url: '' })
   }
 
   const formatKES = (amount) => {
@@ -180,14 +275,111 @@ function Products() {
                 </div>
                 <div className="col-md-6">
                   <div className="form-group mb-3">
-                    <label>Image URL</label>
-                    <input
-                      type="url"
-                      className="form-control"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="https://..."
-                    />
+                    <label>Dropzone - Product Images</label>
+                    
+                    {/* Dropzone */}
+                    <div
+                      {...getRootProps()}
+                      className={`border-2 rounded p-4 text-center cursor-pointer ${
+                        isDragActive
+                          ? 'border-primary bg-light'
+                          : 'border-dashed border-secondary'
+                      }`}
+                      style={{
+                        borderWidth: '2px',
+                        borderStyle: 'dashed',
+                        backgroundColor: isDragActive ? '#e7f3ff' : '#f8f9fa',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="py-3">
+                        <i className="bi bi-cloud-upload" style={{ fontSize: '2rem', color: '#6c757d' }}></i>
+                        <p className="mt-2 mb-0">
+                          {isDragActive ? (
+                            <strong>Drop images here...</strong>
+                          ) : (
+                            <>
+                              <strong>Drag & drop images here</strong><br />
+                              <small className="text-muted">or click to browse</small>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {uploadingImage && (
+                      <div className="mt-2">
+                        <small className="text-muted">
+                          <span className="spinner-border spinner-border-sm mr-2"></span>
+                          Uploading images...
+                        </small>
+                      </div>
+                    )}
+
+                    {/* Image Gallery */}
+                    {formData.images.length > 0 && (
+                      <div className="mt-3">
+                        <label className="small text-muted mb-2 d-block">Uploaded Images ({formData.images.length})</label>
+                        <div className="d-flex flex-wrap gap-2">
+                          {formData.images.map((imageUrl, index) => (
+                            <div key={index} className="position-relative">
+                              <img
+  src={
+    imageUrl.startsWith('http')
+      ? imageUrl
+      : `http://localhost:8080${imageUrl}`
+  }
+                                alt={`Product ${index + 1}`}
+                                className={`img-thumbnail ${
+                                  imageUrl === formData.image_url ? 'border-primary border-3' : ''
+                                }`}
+                                style={{
+                                  width: '100px',
+                                  height: '100px',
+                                  objectFit: 'cover',
+                                  cursor: 'pointer'
+                                }}
+                                onClick={() =>
+                                  setFormData({ ...formData, image_url: imageUrl })
+                                }
+                              />
+                              {imageUrl === formData.image_url && (
+                                <span
+                                  className="badge badge-primary"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '5px',
+                                    right: '5px'
+                                  }}
+                                >
+                                  Primary
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger"
+                                style={{
+                                  position: 'absolute',
+                                  bottom: '5px',
+                                  right: '5px',
+                                  padding: '2px 6px',
+                                  fontSize: '0.75rem'
+                                }}
+                                onClick={() => handleRemoveImage(index)}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <small className="text-muted d-block mt-2">
+                      Click on an image to set it as primary. Max 5MB per image.
+                    </small>
                   </div>
                 </div>
               </div>
@@ -232,13 +424,17 @@ function Products() {
             <div key={product.ID} className="col-md-4 mb-4">
               <div className="card h-100">
                 {product.image_url && (
-                  <img
-                    src={product.image_url}
-                    className="card-img-top"
-                    alt={product.name}
-                    style={{ height: '200px', objectFit: 'cover' }}
-                  />
-                )}
+  <img
+    src={
+      product.image_url.startsWith('http')
+        ? product.image_url
+        : `http://localhost:8080${product.image_url}`
+    }
+    className="card-img-top"
+    alt={product.name}
+    style={{ height: '200px', objectFit: 'cover' }}
+  />
+)}
                 <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
                   {product.category && (
@@ -251,7 +447,23 @@ function Products() {
                     <strong className="text-success">{formatKES(product.suggested_price)}</strong>
                     <small className="text-muted"> suggested price</small>
                   </p>
-                </div>
+                    <div className="mt-3 d-flex gap-2">
+    <button
+      className="btn btn-primary btn-sm"
+      onClick={() => handleBuyNow(product)}
+    >
+      🛒 Buy Now
+    </button>
+
+    <button
+      className="btn btn-outline-secondary btn-sm"
+      onClick={() => handleAddToCart(product)}
+    >
+      ➕ Add to Cart
+    </button>
+  </div>
+</div>
+                
                 {isCashier && (
                   <div className="card-footer bg-white border-top-0">
                     <button

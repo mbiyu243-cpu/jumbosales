@@ -6,10 +6,25 @@ import { formatKES, getStatusClass } from '../utils/format'
  * Used in session list views
  */
 function SessionCard({ session }) {
-  const { ID, item_name, item_description, current_price, total_collected, status, cashier } = session
+  const { ID, item_name, item_description, current_price, total_collected, status, cashier, product } = session
 
   return (
     <div className="card session-card h-100">
+      {/* Product Image */}
+      {product?.image_url && (
+        <div style={{ overflow: 'hidden', height: '200px', backgroundColor: '#f5f5f5' }}>
+          <img 
+            src={product.image_url} 
+            alt={item_name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          />
+        </div>
+      )}
+      
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start mb-2">
           <h5 className="card-title mb-0">{item_name}</h5>

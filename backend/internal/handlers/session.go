@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/titusqpc/jumbo_sales/backend/internal/models"
@@ -14,6 +15,8 @@ type CreateSessionRequest struct {
 	ItemName        string  `json:"item_name" binding:"required"`
 	ItemDescription string  `json:"item_description"`
 	StartingPrice   float64 `json:"starting_price" binding:"required,gt=0"`
+	ProductID       *uint   `json:"product_id,omitempty"` // Optional: link to product catalog
+	DurationMinutes int     `json:"duration_minutes"`
 }
 
 // CreateSession godoc
@@ -41,7 +44,23 @@ func (h *Handler) CreateSession(c *gin.Context) {
 		return
 	}
 
+	if req.DurationMinutes <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Duration must be greater than 0"})
+		return
+	}
+
 	userID := c.GetUint("userID")
+
+	// If ProductID is provided, validate it exists
+	if req.ProductID != nil {
+		var product models.Product
+		if err := h.db.First(&product, *req.ProductID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Product not found"})
+			return
+		}
+	}
+
+	endTime := time.Now().Add(time.Duration(req.DurationMinutes) * time.Minute)
 
 	session := models.AuctionSession{
 		ItemName:        req.ItemName,
@@ -51,6 +70,8 @@ func (h *Handler) CreateSession(c *gin.Context) {
 		TotalCollected:  0,
 		Status:          models.StatusOpen,
 		CashierID:       userID,
+		ProductID:       req.ProductID,
+		EndTime:         &endTime,
 	}
 
 	if err := h.db.Create(&session).Error; err != nil {
@@ -58,8 +79,8 @@ func (h *Handler) CreateSession(c *gin.Context) {
 		return
 	}
 
-	// Load cashier relationship
-	h.db.Preload("Cashier").First(&session, session.ID)
+	// Load relationships
+	h.db.Preload("Cashier").Preload("Product").First(&session, session.ID)
 
 	c.JSON(http.StatusCreated, session)
 }
@@ -74,10 +95,15 @@ func (h *Handler) CreateSession(c *gin.Context) {
 // @Success 200 {array} models.AuctionSession
 // @Router /sessions [get]
 func (h *Handler) ListSessions(c *gin.Context) {
-	status := c.Query("status") // Optional: ?status=open
+	status := c.Query("status")
 
 	var sessions []models.AuctionSession
-	query := h.db.Preload("Cashier").Preload("Winner")
+	query := h.db.Preload("Cashier").Preload("Winner").Preload("Product")
+
+	includeArchived := c.Query("archived")
+	if includeArchived != "true" {
+		query = query.Where("is_archived = ?", false)
+	}
 
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -86,6 +112,15 @@ func (h *Handler) ListSessions(c *gin.Context) {
 	if err := query.Order("created_at DESC").Find(&sessions).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch sessions"})
 		return
+	}
+
+	for i := range sessions {
+		if sessions[i].Status == models.StatusOpen &&
+			sessions[i].EndTime != nil &&
+			time.Now().After(*sessions[i].EndTime) {
+			sessions[i].Status = models.StatusClosed
+			h.db.Save(&sessions[i])
+		}
 	}
 
 	c.JSON(http.StatusOK, sessions)
@@ -109,10 +144,28 @@ func (h *Handler) GetSession(c *gin.Context) {
 	}
 
 	var session models.AuctionSession
-	if err := h.db.Preload("Cashier").Preload("Winner").Preload("Bids.Bidder").
+	if err := h.db.Preload("Cashier").
+		Preload("Winner").
+		Preload("Product").
+		Preload("Bids.Bidder").
 		First(&session, sessionID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Session not found"})
 		return
+	}
+
+	if session.Status == models.StatusOpen &&
+		session.EndTime != nil &&
+		time.Now().After(*session.EndTime) {
+		session.Status = models.StatusClosed
+		h.db.Save(&session)
+
+		sse.BroadcastToSession(uint(sessionID), sse.Event{
+			Type: "session_closed",
+			Data: map[string]interface{}{
+				"session_id": sessionID,
+				"status":     "closed",
+			},
+		})
 	}
 
 	c.JSON(http.StatusOK, session)
@@ -186,4 +239,38 @@ func (h *Handler) CloseSession(c *gin.Context) {
 	h.db.Preload("Cashier").Preload("Winner").First(&session, sessionID)
 
 	c.JSON(http.StatusOK, session)
+}
+
+func (h *Handler) DeleteSession(c *gin.Context) {
+	userRole := c.GetString("userRole")
+
+	if userRole != "cashier" && userRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only cashiers can archive sales"})
+		return
+	}
+
+	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session ID"})
+		return
+	}
+
+	var session models.AuctionSession
+	if err := h.db.First(&session, sessionID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Sale not found"})
+		return
+	}
+
+	if session.Status == models.StatusOpen {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot archive active sale"})
+		return
+	}
+
+	session.IsArchived = true
+	if err := h.db.Save(&session).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive sale"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Sale archived successfully"})
 }
