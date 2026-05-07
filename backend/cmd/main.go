@@ -32,21 +32,7 @@ func main() {
 	// Gin router
 	r := gin.Default()
 
-	r.Use(cors.New(cors.Config{
-	AllowOrigins: []string{
-		"https://stimuli-stylus-repackage.ngrok-free.dev",
-	},
-	AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	AllowHeaders: []string{
-		"Origin",
-		"Content-Type",
-		"Authorization",
-		"Bypass-Tunnel-Reminder",
-		"bypass-tunnel-reminder",
-	},
-	AllowCredentials: false,
-	AllowWildcard: true,
-}))
+	r.Use(cors.Default())
 
 	// Serve uploaded images
     uploadsPath := filepath.Join(".", "uploads")
