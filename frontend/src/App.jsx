@@ -2,7 +2,7 @@ import api from './api/client'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
-import { CartProvider } from './context/CartContext'
+import { CartProvider } from './context/CartContext.jsx'
 
 // Layout
 import Navbar from './components/Navbar'
