@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'https://mason-mechanisms-convenience-theme.trycloudflare.com/api',
+  baseURL: 'https://jumbosales.onrender.com',
   headers: {
     'Content-Type': 'application/json',
   },
