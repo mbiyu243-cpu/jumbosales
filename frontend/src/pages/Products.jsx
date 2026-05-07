@@ -7,6 +7,8 @@ import { productApi } from '../api/sessions'
 import api from '../api/client'
 
 function Products() {
+  const API_URL = import.meta.env.VITE_API_URL
+
   const { isCashier } = useAuth()
   const navigate = useNavigate()
   const { addToCart, buyNow } = useCart()
@@ -327,10 +329,10 @@ const handleBuyNow = (product) => {
                             <div key={index} className="position-relative">
                               <img
   src={
-    imageUrl.startsWith('http')
-      ? imageUrl
-      : `http://localhost:8080${imageUrl}`
-  }
+  imageUrl.startsWith('http')
+    ? imageUrl
+    : `${API_URL}${imageUrl}`
+}
                                 alt={`Product ${index + 1}`}
                                 className={`img-thumbnail ${
                                   imageUrl === formData.image_url ? 'border-primary border-3' : ''
@@ -426,10 +428,10 @@ const handleBuyNow = (product) => {
                 {product.image_url && (
   <img
     src={
-      product.image_url.startsWith('http')
-        ? product.image_url
-        : `http://localhost:8080${product.image_url}`
-    }
+  product.image_url.startsWith('http')
+    ? product.image_url
+    : `${API_URL}${product.image_url}`
+}
     className="card-img-top"
     alt={product.name}
     style={{ height: '200px', objectFit: 'cover' }}
