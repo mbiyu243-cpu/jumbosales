@@ -17,8 +17,8 @@ import SessionDetail from './pages/SessionDetail'
 import CreateSession from './pages/CreateSession'
 import Beneficiaries from './pages/Beneficiaries'
 import Products from './pages/Products'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
+import Cart from './pages/cart.jsx'
+import Checkout from './pages/checkout.jsx'
 
 // Protected Route Component
 function ProtectedRoute({ children, requiredRole }) {
