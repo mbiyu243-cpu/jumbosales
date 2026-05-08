@@ -147,7 +147,7 @@ function CreateSession() {
                   const imageSrc = product.image_url
                     ? product.image_url.startsWith('http')
                       ? product.image_url
-                      : `http://localhost:8080${product.image_url}`
+                      : `${import.meta.env.VITE_API_URL}${product.image_url}`
                     : null
 
                   return (
