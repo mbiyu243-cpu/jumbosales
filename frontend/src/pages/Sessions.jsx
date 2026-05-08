@@ -92,31 +92,33 @@ function Sessions() {
         </div>
       ) : (
         <div className="row">
-          {sessions.map((session) => (
-            <div key={session.ID} className="col-md-6 col-lg-4 mb-4">
-              <SessionCard session={session} />
+  {sessions.map((session) => (
+    <div key={session.ID} className="col-md-6 col-lg-4 mb-5">
+      <div className="h-100 d-flex flex-column">
+        <SessionCard session={session} />
 
-              {isCashier && (
-                <button
-                  className="btn btn-outline-danger btn-block mt-2"
-                  onClick={async () => {
-                    if (!confirm('Archive this sale?')) return
+        {isCashier && (
+          <button
+            className="btn btn-outline-danger btn-block mt-3"
+            onClick={async () => {
+              if (!confirm('Archive this sale?')) return
 
-                    try {
-                      await sessionApi.delete(session.ID)
-                      fetchSessions()
-                    } catch (err) {
-                      console.error(err)
-                      setError('Failed to archive sale')
-                    }
-                  }}
-                >
-                  📦 Archive Sale
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+              try {
+                await sessionApi.delete(session.ID)
+                fetchSessions()
+              } catch (err) {
+                console.error(err)
+                setError('Failed to archive sale')
+              }
+            }}
+          >
+            📦 Archive Sale
+          </button>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
       )}
     </div>
   )
