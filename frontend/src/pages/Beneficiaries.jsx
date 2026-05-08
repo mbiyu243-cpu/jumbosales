@@ -3,6 +3,8 @@ import { beneficiaryApi } from '../api/sessions'
 import { useAuth } from '../context/AuthContext'
 
 function Beneficiaries() {
+  const API_URL = import.meta.env.VITE_API_URL
+
   const [beneficiaries, setBeneficiaries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -12,9 +14,16 @@ function Beneficiaries() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [editingId, setEditingId] = useState(null)
 
-  const slideshowImages = beneficiaries
+  const getImageUrl = (url) => {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  if (url.startsWith('/')) return `${API_URL}${url}`
+  return `${API_URL}/${url}`
+}
+
+const slideshowImages = beneficiaries
   .filter(b => b.photo_url)
-  .map(b => `http://localhost:8080${b.photo_url}`)
+  .map(b => getImageUrl(b.photo_url))
 
   const [formData, setFormData] = useState({
     name: '',
@@ -291,13 +300,13 @@ if (selectedFile) {
       <div key={b.ID || b.id} className="col-md-6 col-lg-4 mb-4">
         <div className="card h-100">
           {b.photo_url && (
-            <img
-              src={`http://localhost:8080${b.photo_url}`}
-              className="card-img-top"
-              alt={b.name}
-              style={{ height: '180px', objectFit: 'cover' }}
-            />
-          )}
+  <img
+    src={getImageUrl(b.photo_url)}
+    className="card-img-top"
+    alt={b.name}
+    style={{ height: '180px', objectFit: 'cover' }}
+  />
+)}
 
           <div className="card-body">
             <h5 className="card-title">{b.name}</h5>
