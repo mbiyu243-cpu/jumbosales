@@ -157,18 +157,20 @@ const handleBuyNow = (product) => {
     }
   }
 
-  const handleEdit = (product) => {
-    setEditingProduct(product)
-    setFormData({
-      name: product.name,
-      description: product.description || '',
-      category: product.category || '',
-      suggested_price: product.suggested_price.toString(),
-      image_url: product.image_url || '',
-      images: product.image_url ? [product.image_url] : []
-    })
-    setShowForm(true)
-  }
+ const handleEdit = (product) => {
+  setEditingProduct(product)
+
+  setFormData({
+    name: product.name || '',
+    description: product.description || '',
+    category: product.category || '',
+    suggested_price: product.suggested_price ? product.suggested_price.toString() : '',
+    image_url: product.image_url || '',
+    images: product.image_url ? [product.image_url] : []
+  })
+
+  setShowForm(true)
+}
 
   const handleCancel = () => {
     setShowForm(false)

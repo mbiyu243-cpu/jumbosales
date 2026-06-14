@@ -14,18 +14,12 @@ function Beneficiaries() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [editingId, setEditingId] = useState(null)
 
-  const getImageUrl = (url) => {
+ const getImageUrl = (url) => {
   if (!url) return ""
 
-  if (url.startsWith("http")) {
-    return url
-  }
+  const filename = url.split("/").pop()
 
-  if (url.startsWith("/")) {
-    return `${API_URL}${url}`
-  }
-
-  return `${API_URL}/${url}`
+  return `https://jumbosales.onrender.com/uploads/${filename}`
 }
 
 const slideshowImages = beneficiaries
@@ -307,12 +301,18 @@ if (selectedFile) {
       <div key={b.ID || b.id} className="col-md-6 col-lg-4 mb-4">
         <div className="card h-100">
           {b.photo_url && (
-  <img
-    src={getImageUrl(b.photo_url)}
-    className="card-img-top"
-    alt={b.name}
-    style={{ height: '180px', objectFit: 'cover' }}
-  />
+  <>
+    <div style={{ fontSize: '10px', color: 'red' }}>
+      {b.photo_url}
+    </div>
+
+    <img
+      src={getImageUrl(b.photo_url)}
+      className="card-img-top"
+      alt={b.name}
+      style={{ height: '180px', objectFit: 'cover' }}
+    />
+  </>
 )}
 
           <div className="card-body">
