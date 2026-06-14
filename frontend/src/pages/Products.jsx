@@ -12,10 +12,9 @@ function Products() {
 const getImageUrl = (url) => {
   if (!url) return ""
 
-  // Always use only the filename
   const filename = url.split("/").pop()
 
-  return `${IMAGE_BASE_URL}/uploads/${filename}`
+  return `https://jumbosales.onrender.com/uploads/${filename}`
 }
 
   const { isCashier } = useAuth()
@@ -339,11 +338,7 @@ const handleBuyNow = (product) => {
                           {formData.images.map((imageUrl, index) => (
                             <div key={index} className="position-relative">
                               <img
-  src={
-  imageUrl.startsWith('http')
-    ? imageUrl
-    : `${API_URL}${imageUrl}`
-}
+ src={getImageUrl(imageUrl)}
                                 alt={`Product ${index + 1}`}
                                 className={`img-thumbnail ${
                                   imageUrl === formData.image_url ? 'border-primary border-3' : ''
