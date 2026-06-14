@@ -6,24 +6,35 @@ import { formatKES, getStatusClass } from '../utils/format'
  * Used in session list views
  */
 function SessionCard({ session }) {
+
+  const API_URL = import.meta.env.VITE_API_URL
+
+const getImageUrl = (url) => {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  if (url.startsWith('/')) return `${API_URL}${url}`
+  return `${API_URL}/${url}`
+}
+
   const { ID, item_name, item_description, current_price, total_collected, status, cashier, product } = session
 
   return (
-    <div className="card session-card h-100">
+    <div className="card session-card h-100 overflow-hidden">
       {/* Product Image */}
       {product?.image_url && (
-        <div style={{ overflow: 'hidden', height: '200px', backgroundColor: '#f5f5f5' }}>
-          <img 
-            src={product.image_url} 
-            alt={item_name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
-          />
-        </div>
-      )}
+  <img
+    src={getImageUrl(product.image_url)}
+    alt={item_name}
+    className="card-img-top"
+    style={{
+      width: '100%',
+      height: '220px',
+      objectFit: 'cover',
+      display: 'block',
+      position: 'static'
+    }}
+  />
+)}
       
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start mb-2">
