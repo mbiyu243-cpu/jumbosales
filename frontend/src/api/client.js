@@ -1,14 +1,12 @@
 import axios from 'axios'
 
-// Create axios instance
 const api = axios.create({
-  baseURL: 'https://jumbosales.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://jumbosales.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor: attach token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -22,7 +20,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor: handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {

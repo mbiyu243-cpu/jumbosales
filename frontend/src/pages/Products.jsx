@@ -7,7 +7,16 @@ import { productApi } from '../api/sessions'
 import api from '../api/client'
 
 function Products() {
-  const API_URL = import.meta.env.VITE_API_URL
+ const IMAGE_BASE_URL = "https://jumbosales.onrender.com"
+
+const getImageUrl = (url) => {
+  if (!url) return ""
+
+  // Always use only the filename
+  const filename = url.split("/").pop()
+
+  return `${IMAGE_BASE_URL}/uploads/${filename}`
+}
 
   const { isCashier } = useAuth()
   const navigate = useNavigate()
@@ -427,14 +436,14 @@ const handleBuyNow = (product) => {
               <div className="card h-100">
                 {product.image_url && (
   <img
-    src={
-  product.image_url.startsWith('http')
-    ? product.image_url
-    : `${API_URL}${product.image_url}`
-}
+    src={getImageUrl(product.image_url)}
     className="card-img-top"
     alt={product.name}
     style={{ height: '200px', objectFit: 'cover' }}
+    onError={() => {
+      console.log("RAW:", product.image_url)
+      console.log("FINAL:", getImageUrl(product.image_url))
+    }}
   />
 )}
                 <div className="card-body">

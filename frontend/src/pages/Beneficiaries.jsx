@@ -3,7 +3,7 @@ import { beneficiaryApi } from '../api/sessions'
 import { useAuth } from '../context/AuthContext'
 
 function Beneficiaries() {
-  const API_URL = import.meta.env.VITE_API_URL
+  const API_URL = import.meta.env.VITE_API_URL || "https://jumbosales.onrender.com"
 
   const [beneficiaries, setBeneficiaries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,9 +15,16 @@ function Beneficiaries() {
   const [editingId, setEditingId] = useState(null)
 
   const getImageUrl = (url) => {
-  if (!url) return null
-  if (url.startsWith('http')) return url
-  if (url.startsWith('/')) return `${API_URL}${url}`
+  if (!url) return ""
+
+  if (url.startsWith("http")) {
+    return url
+  }
+
+  if (url.startsWith("/")) {
+    return `${API_URL}${url}`
+  }
+
   return `${API_URL}/${url}`
 }
 
