@@ -1,17 +1,89 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
 	"github.com/titusqpc/jumbo_sales/backend/internal/models"
 )
+
+func uploadBeneficiaryImageToSupabase(fileHeader *multipart.FileHeader) (string, error) {
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_SECRET_KEY")
+	bucket := os.Getenv("SUPABASE_BUCKET")
+
+	if supabaseURL == "" || supabaseKey == "" || bucket == "" {
+		return "", fmt.Errorf("Supabase storage is not configured")
+	}
+
+	contentType := fileHeader.Header.Get("Content-Type")
+
+	allowedTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/png":  true,
+		"image/gif":  true,
+		"image/webp": true,
+	}
+
+	if !allowedTypes[contentType] {
+		return "", fmt.Errorf("only JPEG, PNG, GIF, and WebP images are allowed")
+	}
+
+	if fileHeader.Size > 5*1024*1024 {
+		return "", fmt.Errorf("image size must be less than 5MB")
+	}
+
+	src, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	fileBytes, err := io.ReadAll(src)
+	if err != nil {
+		return "", err
+	}
+
+	ext := filepath.Ext(fileHeader.Filename)
+	filename := fmt.Sprintf("beneficiary_%d%s", time.Now().UnixNano(), ext)
+	storagePath := "beneficiaries/" + filename
+
+	uploadURL := fmt.Sprintf("%s/storage/v1/object/%s/%s", supabaseURL, bucket, storagePath)
+
+	req, err := http.NewRequest("PUT", uploadURL, bytes.NewReader(fileBytes))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req.Header.Set("apikey", supabaseKey)
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("x-upsert", "true")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("Supabase upload failed: %s", string(body))
+	}
+
+	publicURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", supabaseURL, bucket, storagePath)
+
+	return publicURL, nil
+}
 
 // CreateBeneficiaryRequest defines payload for adding a beneficiary
 type CreateBeneficiaryRequest struct {
@@ -49,18 +121,13 @@ var req CreateBeneficiaryRequest
 var photoURL string
 
 if err == nil {
-    uploadsDir := "./uploads"
+	uploadedURL, uploadErr := uploadBeneficiaryImageToSupabase(file)
+	if uploadErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": uploadErr.Error()})
+		return
+	}
 
-    if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
-        os.MkdirAll(uploadsDir, 0755)
-    }
-
-    filename := fmt.Sprintf("beneficiary_%d_%s", time.Now().Unix(), file.Filename)
-    filePath := filepath.Join(uploadsDir, filename)
-
-    if err := c.SaveUploadedFile(file, filePath); err == nil {
-        photoURL = "/uploads/" + filename
-    }
+	photoURL = uploadedURL
 }
 
 	beneficiary := models.Beneficiary{
@@ -138,26 +205,13 @@ func (h *Handler) UpdateBeneficiary(c *gin.Context) {
 	// Handle optional new photo
 	file, err := c.FormFile("photo")
 if err == nil {
-    // delete old image
-    if beneficiary.PhotoURL != "" {
-        oldPath := "." + beneficiary.PhotoURL
-       if err := os.Remove(oldPath); err != nil {
-    log.Println("Failed to delete old image:", err)
-}
-    }
+	uploadedURL, uploadErr := uploadBeneficiaryImageToSupabase(file)
+	if uploadErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": uploadErr.Error()})
+		return
+	}
 
-    uploadsDir := "./uploads"
-
-	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
-    os.MkdirAll(uploadsDir, 0755)
-}
-
-    filename := fmt.Sprintf("beneficiary_%d_%s", time.Now().Unix(), file.Filename)
-    filePath := filepath.Join(uploadsDir, filename)
-
-    if err := c.SaveUploadedFile(file, filePath); err == nil {
-        beneficiary.PhotoURL = "/uploads/" + filename
-    }
+	beneficiary.PhotoURL = uploadedURL
 }
 
 	if err := h.db.Save(&beneficiary).Error; err != nil {
@@ -185,13 +239,7 @@ if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Beneficiary not found"})
 		return
 	}
-    // delete image file
-	if beneficiary.PhotoURL != "" {
-		filePath := "." + beneficiary.PhotoURL
-		if err := os.Remove(filePath); err != nil {
-        log.Println("Failed to delete file:", err)
-}
-	}
+   
 	beneficiary.IsActive = false
 
 	if err := h.db.Save(&beneficiary).Error; err != nil {
