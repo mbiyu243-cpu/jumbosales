@@ -13,12 +13,18 @@ function Beneficiaries() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [selectedFile, setSelectedFile] = useState(null)
   const [editingId, setEditingId] = useState(null)
+  const [success, setSuccess] = useState('')
 
- const getImageUrl = (url) => {
+const getImageUrl = (url) => {
   if (!url) return ""
 
-  const filename = url.split("/").pop()
+  // New Supabase images
+  if (url.startsWith("http")) {
+    return url
+  }
 
+  // Old Render uploads
+  const filename = url.split("/").pop()
   return `https://jumbosales.onrender.com/uploads/${filename}`
 }
 
@@ -72,6 +78,7 @@ const slideshowImages = beneficiaries
     
     setSaving(true)
     setError('')
+    setSuccess('')
 
     try {
       const form = new FormData()
@@ -87,9 +94,13 @@ if (selectedFile) {
 
     if (editingId) {
   await beneficiaryApi.update(editingId, form)
+  setSuccess('Beneficiary updated successfully')
 } else {
   await beneficiaryApi.create(form)
+  setSuccess('Beneficiary added successfully')
 }
+
+setTimeout(() => setSuccess(''), 3000)
       setShowForm(false)
       setFormData({ name: '', description: '', category: '', location: '', contact_info: '' })
       setSelectedFile(null)
@@ -134,6 +145,18 @@ if (selectedFile) {
       <p className="text-muted mb-4">
   These are the organizations and individuals who can receive donated items from Jumbo Sale winners.
 </p>
+
+{error && (
+  <div className="alert alert-danger">
+    {error}
+  </div>
+)}
+
+{success && (
+  <div className="alert alert-success">
+    {success}
+  </div>
+)}
 
 {/* SLIDESHOW HERE */}
 {slideshowImages.length > 0 && (
