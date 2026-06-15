@@ -7,24 +7,16 @@ import { productApi } from '../api/sessions'
 import api from '../api/client'
 
 function Products() {
- const IMAGE_BASE_URL = "https://jumbosales.onrender.com"
 
 const getImageUrl = (url) => {
-  if (!url) return "";
+  if (!url) return ""
 
-  // Supabase URLs
-  if (url.includes("supabase.co/storage")) {
-    return url;
-  }
-
-  // Any other full URL
   if (url.startsWith("http")) {
-    return url;
+    return url
   }
 
-  // Legacy Render uploads
-  return `https://jumbosales.onrender.com${url}`;
-};
+  return `https://jumbosales.onrender.com${url}`
+}
 
   const { isCashier } = useAuth()
   const navigate = useNavigate()
@@ -144,11 +136,15 @@ const handleBuyNow = (product) => {
     e.preventDefault()
     setError('')
 
+    const cleanImageUrl = formData.image_url || ""
+
     try {
-      const data = {
-        ...formData,
-        suggested_price: parseFloat(formData.suggested_price)
-      }
+     const data = {
+  ...formData,
+  image_url: cleanImageUrl,
+  images: undefined,
+  suggested_price: parseFloat(formData.suggested_price)
+}
 
       if (editingProduct) {
         await productApi.update(editingProduct.ID, data)
@@ -156,7 +152,14 @@ const handleBuyNow = (product) => {
         await productApi.create(data)
       }
 
-      setFormData({ name: '', description: '', category: '', suggested_price: '', image_url: '' })
+      setFormData({
+  name: '',
+  description: '',
+  category: '',
+  suggested_price: '',
+  image_url: '',
+  images: []
+})
       setShowForm(false)
       setEditingProduct(null)
       fetchProducts()
@@ -166,15 +169,17 @@ const handleBuyNow = (product) => {
   }
 
  const handleEdit = (product) => {
+  const validImageUrl = product.image_url || ""
+
   setEditingProduct(product)
 
   setFormData({
-    name: product.name || '',
-    description: product.description || '',
-    category: product.category || '',
-    suggested_price: product.suggested_price ? product.suggested_price.toString() : '',
-    image_url: product.image_url || '',
-    images: product.image_url ? [product.image_url] : []
+    name: product.name || "",
+    description: product.description || "",
+    category: product.category || "",
+    suggested_price: product.suggested_price ? product.suggested_price.toString() : "",
+    image_url: validImageUrl,
+    images: validImageUrl ? [validImageUrl] : []
   })
 
   setShowForm(true)
@@ -440,16 +445,12 @@ const handleBuyNow = (product) => {
           {products.map(product => (
             <div key={product.ID} className="col-md-4 mb-4">
               <div className="card h-100">
-                {product.image_url && (
+                {getImageUrl(product.image_url) && (
   <img
     src={getImageUrl(product.image_url)}
     className="card-img-top"
     alt={product.name}
-    style={{ height: '200px', objectFit: 'cover' }}
-    onError={() => {
-      console.log("RAW:", product.image_url)
-      console.log("FINAL:", getImageUrl(product.image_url))
-    }}
+    style={{ height: "200px", objectFit: "cover" }}
   />
 )}
                 <div className="card-body">
