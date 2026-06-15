@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -254,43 +255,39 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /products/upload-image [post]
 func (h *ProductHandler) UploadImage(c *gin.Context) {
-	// Get file from form
 	file, err := c.FormFile("image")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No image provided"})
 		return
 	}
 
-	// Validate file size (max 5MB)
 	if file.Size > 5*1024*1024 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Image size must be less than 5MB"})
 		return
 	}
 
-	// Validate file type
 	allowedTypes := map[string]bool{
 		"image/jpeg": true,
 		"image/png":  true,
 		"image/gif":  true,
 		"image/webp": true,
 	}
-	if !allowedTypes[file.Header.Get("Content-Type")] {
+
+	contentType := file.Header.Get("Content-Type")
+	if !allowedTypes[contentType] {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Only JPEG, PNG, GIF, and WebP images are allowed"})
 		return
 	}
 
-	// Create uploads directory if it doesn't exist
-	uploadsDir := "./uploads"
-	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
-		os.MkdirAll(uploadsDir, 0755)
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_SECRET_KEY")
+	bucket := os.Getenv("SUPABASE_BUCKET")
+
+	if supabaseURL == "" || supabaseKey == "" || bucket == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Supabase storage is not configured"})
+		return
 	}
 
-	// Generate unique filename
-	ext := filepath.Ext(file.Filename)
-	filename := fmt.Sprintf("product_%d%s", time.Now().UnixNano(), ext)
-	filepath := filepath.Join(uploadsDir, filename)
-
-	// Save file
 	src, err := file.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open uploaded file"})
@@ -298,23 +295,50 @@ func (h *ProductHandler) UploadImage(c *gin.Context) {
 	}
 	defer src.Close()
 
-	dst, err := os.Create(filepath)
+	fileBytes, err := io.ReadAll(src)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
-		return
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save image"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read uploaded file"})
 		return
 	}
 
-	// Return URL relative to web root
-	imageURL := "/uploads/" + filename
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("product_%d%s", time.Now().UnixNano(), ext)
+	storagePath := "products/" + filename
+
+	uploadURL := fmt.Sprintf("%s/storage/v1/object/%s/%s", supabaseURL, bucket, storagePath)
+
+	req, err := http.NewRequest("PUT", uploadURL, bytes.NewReader(fileBytes))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload request"})
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req.Header.Set("apikey", supabaseKey)
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("x-upsert", "true")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image to Supabase"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Supabase upload failed",
+			"details": string(body),
+		})
+		return
+	}
+
+	publicURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", supabaseURL, bucket, storagePath)
 
 	c.JSON(http.StatusOK, gin.H{
-		"image_url": imageURL,
+		"image_url": publicURL,
 		"filename":  filename,
 	})
 }
