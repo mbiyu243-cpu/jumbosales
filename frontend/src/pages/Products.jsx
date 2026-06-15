@@ -10,12 +10,21 @@ function Products() {
  const IMAGE_BASE_URL = "https://jumbosales.onrender.com"
 
 const getImageUrl = (url) => {
-  if (!url) return ""
+  if (!url) return "";
 
-  const filename = url.split("/").pop()
+  // Supabase URLs
+  if (url.includes("supabase.co/storage")) {
+    return url;
+  }
 
-  return `https://jumbosales.onrender.com/uploads/${filename}`
-}
+  // Any other full URL
+  if (url.startsWith("http")) {
+    return url;
+  }
+
+  // Legacy Render uploads
+  return `https://jumbosales.onrender.com${url}`;
+};
 
   const { isCashier } = useAuth()
   const navigate = useNavigate()
