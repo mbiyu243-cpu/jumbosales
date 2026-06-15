@@ -167,9 +167,11 @@ func (h *Handler) ListBeneficiaries(c *gin.Context) {
 	}
 
 	if err := query.Order("name ASC").Find(&beneficiaries).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch beneficiaries"})
-		return
-	}
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"error": err.Error(),
+	})
+	return
+}
 
 	c.JSON(http.StatusOK, beneficiaries)
 }
