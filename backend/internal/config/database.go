@@ -22,9 +22,15 @@ func InitDB() (*gorm.DB, error) {
 		getEnv("DB_PORT", "5432"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(
+	postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true,
+	}),
+	&gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
-	})
+	},
+)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
