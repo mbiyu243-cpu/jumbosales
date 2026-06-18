@@ -36,9 +36,19 @@ func main() {
     AllowOrigins: []string{
         "http://localhost:5173",
         "https://jumbosales.vercel.app",
+        "https://www.jumbosales.vercel.app",
     },
-    AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-    AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+    AllowMethods: []string{
+        "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS",
+    },
+    AllowHeaders: []string{
+        "Origin",
+        "Content-Type",
+        "Authorization",
+    },
+    ExposeHeaders: []string{
+        "Content-Length",
+    },
     AllowCredentials: true,
 }))
 
