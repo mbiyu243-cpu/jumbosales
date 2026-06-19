@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { beneficiaryApi } from '../api/sessions'
 import { useAuth } from '../context/AuthContext'
+import { toast } from 'react-toastify'
+
 
 function Beneficiaries() {
   const API_URL = import.meta.env.VITE_API_URL || "https://jumbosales.onrender.com"
@@ -92,12 +94,12 @@ if (selectedFile) {
   form.append('photo', selectedFile)
 }
 
-    if (editingId) {
+   if (editingId) {
   await beneficiaryApi.update(editingId, form)
-  setSuccess('Beneficiary updated successfully')
+  toast.success("Beneficiary updated successfully")
 } else {
   await beneficiaryApi.create(form)
-  setSuccess('Beneficiary added successfully')
+  toast.success("Beneficiary added successfully")
 }
 
 setTimeout(() => setSuccess(''), 3000)
@@ -108,7 +110,7 @@ setTimeout(() => setSuccess(''), 3000)
       fetchBeneficiaries()
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.error || 'Failed to add beneficiary')
+     toast.error(err.response?.data?.error || 'Failed to save beneficiary')
     } finally {
       setSaving(false)
     }
@@ -118,9 +120,10 @@ setTimeout(() => setSuccess(''), 3000)
 
   try {
     await beneficiaryApi.delete(id)
-    fetchBeneficiaries()
+toast.success("Beneficiary deleted successfully")
+fetchBeneficiaries()
   } catch (err) {
-    setError(err.response?.data?.error || 'Failed to delete beneficiary')
+    toast.error(err.response?.data?.error || 'Failed to delete beneficiary')
   }
 }
   const categories = ['orphanage', 'school', 'hospital', 'elderly home', 'community', 'other']
@@ -149,12 +152,6 @@ setTimeout(() => setSuccess(''), 3000)
 {error && (
   <div className="alert alert-danger">
     {error}
-  </div>
-)}
-
-{success && (
-  <div className="alert alert-success">
-    {success}
   </div>
 )}
 

@@ -3,6 +3,9 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext.jsx'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 // Layout
 import Navbar from './components/Navbar'
@@ -75,7 +78,7 @@ function App() {
 
     try {
       await api.put('/me/profile', profileForm)
-      alert('Profile updated successfully.')
+      toast.success('Profile updated successfully.')
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to update profile')
     }
@@ -349,7 +352,15 @@ const logoutAllDevices = async () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <Footer />
+            <Footer />
+      
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+      />
     </div>
    </CartProvider>
   )
